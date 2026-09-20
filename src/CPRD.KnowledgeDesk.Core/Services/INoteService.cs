@@ -30,4 +30,12 @@ public interface INoteService
     Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken);
     Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken);
     Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken);
+
+    Task ArchiveAsync(Guid id, CancellationToken cancellationToken);
+    Task UnarchiveAsync(Guid id, CancellationToken cancellationToken);
+    Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken);
+    Task RestoreFromTrashAsync(Guid id, CancellationToken cancellationToken);
+    Task DeletePermanentlyAsync(Guid id, CancellationToken cancellationToken);
+    Task<int> PurgeTrashOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Note>> ListTrashAsync(CancellationToken cancellationToken);
 }
