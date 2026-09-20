@@ -39,6 +39,19 @@ public sealed class SearchRepository
         await insert.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task RemoveAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Guid noteId,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "DELETE FROM notes_fts WHERE note_id=$id";
+        command.Parameters.AddWithValue("$id", noteId.ToString("D"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     public async Task RefreshFolderSubtreeAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
