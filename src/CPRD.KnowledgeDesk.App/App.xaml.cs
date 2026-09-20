@@ -38,6 +38,8 @@ public partial class App : Application
             collection.AddSingleton<ISearchService, SearchService>();
             collection.AddSingleton<IDashboardService, DashboardService>();
             collection.AddSingleton<IRevisionService, RevisionService>();
+            collection.AddSingleton<IBackupService, BackupService>();
+            collection.AddSingleton<IRecoveryService, RecoveryService>();
 
             collection.AddSingleton<IDelayScheduler, SystemDelayScheduler>();
             collection.AddSingleton(sp => new AutoSaveCoordinator(
@@ -46,6 +48,7 @@ public partial class App : Application
 
             collection.AddSingleton<WorkspaceService>();
             collection.AddSingleton<KeyboardShortcutService>();
+            collection.AddSingleton<StartupMaintenanceService>();
             collection.AddSingleton<EditorViewModel>();
             collection.AddSingleton<MainWindowViewModel>();
             collection.AddSingleton<MainWindow>();
@@ -56,6 +59,9 @@ public partial class App : Application
 
             var db = _services.GetRequiredService<KnowledgeDb>();
             await db.InitializeAsync(CancellationToken.None);
+
+            var maintenance = _services.GetRequiredService<StartupMaintenanceService>();
+            await maintenance.RunAsync(CancellationToken.None);
 
             var vm = _services.GetRequiredService<MainWindowViewModel>();
             await vm.InitializeAsync();
