@@ -40,6 +40,7 @@ public partial class App : Application
             collection.AddSingleton<IRevisionService, RevisionService>();
             collection.AddSingleton<IBackupService, BackupService>();
             collection.AddSingleton<IRecoveryService, RecoveryService>();
+            collection.AddSingleton<IAppLogService, AppLogService>();
 
             collection.AddSingleton<IDelayScheduler, SystemDelayScheduler>();
             collection.AddSingleton(sp => new AutoSaveCoordinator(
@@ -56,6 +57,7 @@ public partial class App : Application
             collection.AddTransient<QuickCaptureWindow>();
 
             _services = collection.BuildServiceProvider();
+            RegisterGlobalExceptionLogging(_services.GetRequiredService<IAppLogService>());
 
             var db = _services.GetRequiredService<KnowledgeDb>();
             await db.InitializeAsync(CancellationToken.None);
@@ -72,12 +74,57 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            if (_services is not null)
+                TryLog(_services.GetService<IAppLogService>(), AppLogLevel.Error, "Application startup failed.", ex);
+
             MessageBox.Show(
                 $"CPRD Knowledge Desk could not start.\n\n{ex.Message}",
                 "Startup Error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);
+        }
+    }
+
+    private void RegisterGlobalExceptionLogging(IAppLogService log)
+    {
+        DispatcherUnhandledException += (_, args) =>
+        {
+            TryLog(log, AppLogLevel.Error, "Unhandled UI exception.", args.Exception);
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            TryLog(
+                log,
+                AppLogLevel.Error,
+                "Unhandled application-domain exception.",
+                args.ExceptionObject as Exception);
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            TryLog(log, AppLogLevel.Error, "Unobserved background task exception.", args.Exception);
+            args.SetObserved();
+        };
+    }
+
+    private static void TryLog(
+        IAppLogService? log,
+        AppLogLevel level,
+        string message,
+        Exception? exception)
+    {
+        if (log is null) return;
+
+        try
+        {
+            log.LogAsync(level, message, exception, CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch
+        {
         }
     }
 
