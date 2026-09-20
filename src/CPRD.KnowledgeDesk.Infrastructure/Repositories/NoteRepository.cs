@@ -151,6 +151,81 @@ public sealed class NoteRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task SetArchivedAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Guid id,
+        bool archived,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "UPDATE notes SET is_archived=$archived, modified_at_utc=$modified WHERE id=$id AND deleted_at_utc IS NULL";
+        command.Parameters.AddWithValue("$id", id.ToString("D"));
+        command.Parameters.AddWithValue("$archived", archived ? 1 : 0);
+        command.Parameters.AddWithValue("$modified", DateTimeOffset.UtcNow.ToString("O"));
+        if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            throw new KeyNotFoundException($"Note '{id}' was not found.");
+    }
+
+    public async Task SetDeletedAtAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Guid id,
+        DateTimeOffset? deletedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "UPDATE notes SET deleted_at_utc=$deleted, modified_at_utc=$modified WHERE id=$id";
+        command.Parameters.AddWithValue("$id", id.ToString("D"));
+        command.Parameters.AddWithValue("$deleted", deletedAtUtc?.ToString("O") ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("$modified", DateTimeOffset.UtcNow.ToString("O"));
+        if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+            throw new KeyNotFoundException($"Note '{id}' was not found.");
+    }
+
+    public async Task DeleteAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "DELETE FROM notes WHERE id=$id";
+        command.Parameters.AddWithValue("$id", id.ToString("D"));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetTrashIdsOlderThanAsync(
+        DateTimeOffset cutoffUtc,
+        CancellationToken cancellationToken)
+    {
+        var result = new List<Guid>();
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT id FROM notes WHERE deleted_at_utc IS NOT NULL AND deleted_at_utc < $cutoff";
+        command.Parameters.AddWithValue("$cutoff", cutoffUtc.ToString("O"));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add(Guid.Parse(reader.GetString(0)));
+        return result;
+    }
+
+    public async Task<IReadOnlyList<Note>> ListTrashAsync(CancellationToken cancellationToken)
+    {
+        var result = new List<Note>();
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM notes WHERE deleted_at_utc IS NOT NULL ORDER BY deleted_at_utc DESC";
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken)) result.Add(Read(reader));
+        return result;
+    }
+
     private static void BindNote(SqliteCommand command, Note note)
     {
         command.Parameters.AddWithValue("$id", note.Id.ToString("D"));
