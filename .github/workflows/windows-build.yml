@@ -6,6 +6,7 @@ on:
     branches:
       - feature/knowledge-desk-v1
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
