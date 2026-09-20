@@ -63,6 +63,10 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
         RefreshDashboardCommand = new AsyncRelayCommand(RefreshDashboardAsync);
+        ShowAllNotesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("All Notes", false, false));
+        ShowFavoritesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Favorites", true, false));
+        ShowPinnedCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Pinned", false, true));
+        ShowRecentCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Recent", false, false));
         CreateNewNoteCommand = new AsyncRelayCommand(CreateNewNoteAsync);
         CloseWorkspaceNoteCommand = new AsyncRelayCommand<Guid>(CloseWorkspaceNoteAsync);
         CloseActiveWorkspaceCommand = new AsyncRelayCommand(CloseActiveWorkspaceAsync, () => Editor.CurrentNote is not null);
@@ -81,6 +85,10 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
     public IAsyncRelayCommand SearchCommand { get; }
     public IAsyncRelayCommand RefreshDashboardCommand { get; }
+    public IAsyncRelayCommand ShowAllNotesCommand { get; }
+    public IAsyncRelayCommand ShowFavoritesCommand { get; }
+    public IAsyncRelayCommand ShowPinnedCommand { get; }
+    public IAsyncRelayCommand ShowRecentCommand { get; }
     public IAsyncRelayCommand CreateNewNoteCommand { get; }
     public AsyncRelayCommand<Guid> CloseWorkspaceNoteCommand { get; }
     public IAsyncRelayCommand CloseActiveWorkspaceCommand { get; }
@@ -251,8 +259,36 @@ public sealed class MainWindowViewModel : ObservableObject
         return noteId is null ? Task.CompletedTask : CloseWorkspaceNoteAsync(noteId.Value);
     }
 
+    private async Task LoadNavigationAsync(string label, bool favoritesOnly, bool pinnedOnly)
+    {
+        await Editor.FlushAsync(true, CancellationToken.None);
+
+        SelectedFolderId = null;
+        Notes.Clear();
+        SearchResults.Clear();
+
+        var query = new SearchQuery(
+            string.Empty,
+            null,
+            Array.Empty<Guid>(),
+            null,
+            null,
+            null,
+            false,
+            favoritesOnly,
+            pinnedOnly,
+            false,
+            200);
+
+        foreach (var hit in await _search.SearchAsync(query, CancellationToken.None))
+            SearchResults.Add(hit);
+
+        StatusText = $"{label}: {SearchResults.Count} note(s)";
+    }
+
     private async Task SearchAsync()
     {
+        Notes.Clear();
         SearchResults.Clear();
         var text = GlobalSearchText.Trim();
         if (text.Length == 0)
