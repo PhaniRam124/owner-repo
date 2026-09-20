@@ -12,6 +12,7 @@ namespace CPRD.KnowledgeDesk.App;
 
 public partial class App : Application
 {
+    // Core stability release candidate.
     private ServiceProvider? _services;
 
     protected override async void OnStartup(StartupEventArgs e)
