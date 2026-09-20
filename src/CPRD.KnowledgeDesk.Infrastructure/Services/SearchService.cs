@@ -26,7 +26,7 @@ public sealed class SearchService : ISearchService
         if (tokens.Length == 0)
             return await SearchWithoutTextAsync(query, cancellationToken);
 
-        var matchExpression = string.Join(' ', tokens.Select(token => $""{token.Replace(""", """")}"*"));
+        var matchExpression = string.Join(' ', tokens.Select(token => "\"" + token + "\"*"));
         var tagCondition = BuildTagCondition(query.TagIds.Count);
         var sql = $"""
             WITH RECURSIVE subtree(id) AS (
