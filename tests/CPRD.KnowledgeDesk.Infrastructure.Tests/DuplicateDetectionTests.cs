@@ -1,3 +1,4 @@
+using CPRD.KnowledgeDesk.Core.Models;
 using CPRD.KnowledgeDesk.Core.Services;
 using CPRD.KnowledgeDesk.Infrastructure.Data;
 using CPRD.KnowledgeDesk.Infrastructure.Repositories;
