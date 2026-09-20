@@ -24,7 +24,9 @@
             <StackPanel Orientation="Horizontal">
                 <Button Content="B" FontWeight="Bold" ToolTip="Bold" Click="Bold_Click"/>
                 <Button Content="I" FontStyle="Italic" ToolTip="Italic" Click="Italic_Click"/>
-                <Button Content="U" TextBlock.TextDecorations="Underline" ToolTip="Underline" Click="Underline_Click"/>
+                <Button ToolTip="Underline" Click="Underline_Click">
+                    <TextBlock Text="U" TextDecorations="Underline"/>
+                </Button>
                 <Separator Margin="5,0"/>
                 <Button Content="• List" ToolTip="Bulleted list" Click="Bullets_Click"/>
                 <Button Content="1. List" ToolTip="Numbered list" Click="Numbering_Click"/>
