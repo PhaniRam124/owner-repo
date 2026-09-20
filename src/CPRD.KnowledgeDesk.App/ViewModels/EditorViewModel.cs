@@ -11,6 +11,8 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private readonly INoteService _notes;
     private readonly IRevisionService? _revisions;
     private readonly AutoSaveCoordinator _autoSave;
+    private readonly IRecoveryService? _recovery;
+    private readonly AutoSaveCoordinator? _recoveryCoordinator;
     private readonly bool _ownsAutoSave;
     private Note? _note;
     private string _title = string.Empty;
@@ -26,20 +28,45 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private DateTimeOffset _lastRevisionAtUtc = DateTimeOffset.MinValue;
 
     public EditorViewModel(INoteService notes)
-        : this(notes, null, new AutoSaveCoordinator(new SystemDelayScheduler(), TimeSpan.FromMilliseconds(750)), true)
+        : this(
+            notes,
+            null,
+            new AutoSaveCoordinator(new SystemDelayScheduler(), TimeSpan.FromMilliseconds(750)),
+            null,
+            true)
     {
     }
 
     public EditorViewModel(INoteService notes, IRevisionService revisions, AutoSaveCoordinator autoSave)
-        : this(notes, revisions, autoSave, false)
+        : this(notes, revisions, autoSave, null, false)
     {
     }
 
-    private EditorViewModel(INoteService notes, IRevisionService? revisions, AutoSaveCoordinator autoSave, bool ownsAutoSave)
+    public EditorViewModel(
+        INoteService notes,
+        IRevisionService revisions,
+        AutoSaveCoordinator autoSave,
+        IRecoveryService recovery)
+        : this(notes, revisions, autoSave, recovery, false)
+    {
+    }
+
+    private EditorViewModel(
+        INoteService notes,
+        IRevisionService? revisions,
+        AutoSaveCoordinator autoSave,
+        IRecoveryService? recovery,
+        bool ownsAutoSave)
     {
         _notes = notes;
         _revisions = revisions;
         _autoSave = autoSave;
+        _recovery = recovery;
+        _recoveryCoordinator = recovery is null
+            ? null
+            : new AutoSaveCoordinator(
+                new SystemDelayScheduler(),
+                TimeSpan.FromMilliseconds(200));
         _ownsAutoSave = ownsAutoSave;
         SaveNowCommand = new AsyncRelayCommand(() => FlushAsync(true, CancellationToken.None), () => _note is not null);
         ToggleFavoriteCommand = new RelayCommand(ToggleFavorite, () => _note is not null);
@@ -174,6 +201,23 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
 
         SaveState = "Unsaved";
         SaveStatus = "Unsaved changes";
+
+        if (_recovery is not null &&
+            _recoveryCoordinator is not null &&
+            CurrentNote is { } recoveryNote)
+        {
+            var draft = new RecoveryDraft(
+                recoveryNote.Id,
+                Title,
+                ContentPackage,
+                PlainText,
+                StructuredJson,
+                DateTimeOffset.UtcNow);
+
+            _ = _recoveryCoordinator.ScheduleAsync(
+                ct => _recovery.SaveDraftAsync(draft, ct));
+        }
+
         _ = _autoSave.ScheduleAsync(ct => SaveCoreAsync(false, ct));
     }
 
@@ -192,6 +236,9 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
 
         try
         {
+            if (_recoveryCoordinator is not null)
+                await _recoveryCoordinator.FlushAsync(cancellationToken);
+
             var now = DateTimeOffset.UtcNow;
             var revisionDue = forceRevision || now - _lastRevisionAtUtc >= TimeSpan.FromMinutes(5);
             if (revisionDue && _revisions is not null)
@@ -223,6 +270,9 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
                 ModifiedAtUtc = now
             };
 
+            if (_recovery is not null)
+                await _recovery.DeleteDraftAsync(current.Id, cancellationToken);
+
             SaveState = "Saved";
             SaveStatus = $"Saved {DateTime.Now:t}";
         }
@@ -243,6 +293,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        _recoveryCoordinator?.Dispose();
         if (_ownsAutoSave) _autoSave.Dispose();
     }
 }
