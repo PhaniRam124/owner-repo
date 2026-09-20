@@ -1,0 +1,62 @@
+<UserControl x:Class="CPRD.KnowledgeDesk.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold" Margin="5,0,5,8"/>
+
+        <UniformGrid Grid.Row="1" Columns="4">
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel><TextBlock Text="{Binding TotalNotes}" FontSize="24" FontWeight="Bold"/><TextBlock Text="Total Notes" Foreground="{StaticResource MutedBrush}"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel><TextBlock Text="{Binding FolderCount}" FontSize="24" FontWeight="Bold"/><TextBlock Text="Folders" Foreground="{StaticResource MutedBrush}"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel><TextBlock Text="{Binding FavoriteCount}" FontSize="24" FontWeight="Bold"/><TextBlock Text="Favorites" Foreground="{StaticResource MutedBrush}"/></StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel><TextBlock Text="{Binding UpdatedToday}" FontSize="24" FontWeight="Bold"/><TextBlock Text="Updated Today" Foreground="{StaticResource MutedBrush}"/></StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Grid Grid.Row="2" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="Recent Notes" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding Recent}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,4">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="Pinned" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding Pinned}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Title}" Margin="0,4" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Separator Margin="0,10"/>
+                    <TextBlock Text="Backup" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding BackupStatus}" Foreground="{StaticResource MutedBrush}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
