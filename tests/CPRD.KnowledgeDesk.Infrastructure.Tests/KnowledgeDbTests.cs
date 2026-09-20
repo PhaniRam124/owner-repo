@@ -26,6 +26,30 @@ public sealed class KnowledgeDbTests
         Assert.Equal(new[] { "folders", "note_tags", "notes", "notes_fts", "tags" }, names);
     }
 
+    [Fact]
+    public async Task InitializeAsync_enables_wal_and_busy_timeout()
+    {
+        using var temp = new TempDirectory();
+        var paths = new TestAppPaths(temp.Path);
+        var db = new KnowledgeDb(paths);
+
+        await db.InitializeAsync(CancellationToken.None);
+
+        await using var connection = db.OpenConnection();
+        await connection.OpenAsync();
+
+        var journal = connection.CreateCommand();
+        journal.CommandText = "PRAGMA journal_mode";
+        var mode = Convert.ToString(await journal.ExecuteScalarAsync());
+
+        var timeout = connection.CreateCommand();
+        timeout.CommandText = "PRAGMA busy_timeout";
+        var busyTimeout = Convert.ToInt32(await timeout.ExecuteScalarAsync());
+
+        Assert.Equal("wal", mode, ignoreCase: true);
+        Assert.True(busyTimeout >= 5000);
+    }
+
     private sealed class TestAppPaths : IAppPaths
     {
         public TestAppPaths(string root)
