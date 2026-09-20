@@ -68,17 +68,28 @@ public sealed class AutoSaveCoordinator : IDisposable
             await save(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task RunAfterDelayAsync(CancellationTokenSource scheduledCts)
+    private Task RunAfterDelayAsync(CancellationTokenSource scheduledCts)
     {
-        try
-        {
-            await _delayScheduler.DelayAsync(_delay, scheduledCts.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (scheduledCts.IsCancellationRequested)
-        {
-            return;
-        }
+        var delayTask = _delayScheduler.DelayAsync(_delay, scheduledCts.Token);
 
+        return delayTask.ContinueWith(
+            completed =>
+            {
+                if (completed.IsCanceled || scheduledCts.IsCancellationRequested)
+                    return Task.CompletedTask;
+
+                if (completed.IsFaulted)
+                    return Task.FromException(completed.Exception?.GetBaseException() ?? new InvalidOperationException("Autosave delay failed."));
+
+                return ExecuteScheduledSaveAsync(scheduledCts);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default).Unwrap();
+    }
+
+    private async Task ExecuteScheduledSaveAsync(CancellationTokenSource scheduledCts)
+    {
         Func<CancellationToken, Task>? save;
         lock (_gate)
         {
