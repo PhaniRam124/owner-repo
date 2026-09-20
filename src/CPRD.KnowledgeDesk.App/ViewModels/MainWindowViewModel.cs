@@ -127,51 +127,62 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task CreateNewNoteAsync()
     {
-        await Editor.FlushAsync(true, CancellationToken.None);
-
-        var folderId = SelectedFolderId
-            ?? Folders.FirstOrDefault(folder =>
-                    !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))?.Id
-            ?? Folders.FirstOrDefault(folder => !folder.IsArchived)?.Id;
-
-        if (folderId is null)
+        try
         {
-            StatusText = "Create a folder before adding a note.";
-            return;
+            await Editor.FlushAsync(true, CancellationToken.None);
+
+            var folderId = SelectedFolderId
+                ?? Folders.FirstOrDefault(folder =>
+                        !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))?.Id
+                ?? Folders.FirstOrDefault(folder => !folder.IsArchived)?.Id;
+
+            if (folderId is null)
+            {
+                StatusText = "Create a folder before adding a note.";
+                return;
+            }
+
+            var untitledNumber = Notes.Count(note =>
+                note.Title.StartsWith("Untitled Note", StringComparison.OrdinalIgnoreCase)) + 1;
+            var title = untitledNumber == 1 ? "Untitled Note" : $"Untitled Note {untitledNumber}";
+
+            var note = await _notes.CreateAsync(
+                new NewNoteRequest(
+                    title,
+                    string.Empty,
+                    string.Empty,
+                    folderId.Value,
+                    "Standard Note",
+                    "{}",
+                    Array.Empty<string>()),
+                CancellationToken.None);
+
+            SelectedFolderId = folderId.Value;
+            SearchResults.Clear();
+
+            var existing = Notes.FirstOrDefault(item => item.Id == note.Id);
+            if (existing is not null)
+                Notes.Remove(existing);
+            Notes.Insert(0, note);
+
+            _workspace.Open(note.Id);
+            var openExisting = WorkspaceNotes.FirstOrDefault(item => item.Id == note.Id);
+            if (openExisting is not null)
+                WorkspaceNotes.Remove(openExisting);
+            WorkspaceNotes.Add(note);
+
+            while (WorkspaceNotes.Count > WorkspaceService.MaximumOpenNotes)
+                WorkspaceNotes.RemoveAt(0);
+
+            await _notes.MarkOpenedAsync(note.Id, DateTimeOffset.UtcNow, CancellationToken.None);
+            Editor.Load(note);
+            CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
+            StatusText = "New note created — start typing.";
         }
-
-        var note = await _notes.CreateAsync(
-            new NewNoteRequest(
-                "Untitled Note",
-                string.Empty,
-                string.Empty,
-                folderId.Value,
-                "Standard Note",
-                "{}",
-                Array.Empty<string>()),
-            CancellationToken.None);
-
-        SelectedFolderId = folderId.Value;
-        SearchResults.Clear();
-
-        var existing = Notes.FirstOrDefault(item => item.Id == note.Id);
-        if (existing is not null)
-            Notes.Remove(existing);
-        Notes.Insert(0, note);
-
-        _workspace.Open(note.Id);
-        var openExisting = WorkspaceNotes.FirstOrDefault(item => item.Id == note.Id);
-        if (openExisting is not null)
-            WorkspaceNotes.Remove(openExisting);
-        WorkspaceNotes.Add(note);
-
-        while (WorkspaceNotes.Count > WorkspaceService.MaximumOpenNotes)
-            WorkspaceNotes.RemoveAt(0);
-
-        await _notes.MarkOpenedAsync(note.Id, DateTimeOffset.UtcNow, CancellationToken.None);
-        Editor.Load(note);
-        CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
-        StatusText = "New note created — start typing.";
+        catch (Exception ex)
+        {
+            StatusText = $"Unable to create note: {ex.Message}";
+        }
     }
 
     private async Task SelectFolderAsync(Guid folderId)
