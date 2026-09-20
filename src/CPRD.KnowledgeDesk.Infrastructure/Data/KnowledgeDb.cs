@@ -7,7 +7,8 @@ public sealed class KnowledgeDb
 {
     private static readonly (int Version, string ResourceName)[] Migrations =
     {
-        (2, "CPRD.KnowledgeDesk.Infrastructure.Data.Migrations.V002_Safety.sql")
+        (2, "CPRD.KnowledgeDesk.Infrastructure.Data.Migrations.V002_Safety.sql"),
+        (3, "CPRD.KnowledgeDesk.Infrastructure.Data.Migrations.V003_Attachments.sql")
     };
 
     private readonly IAppPaths _paths;
