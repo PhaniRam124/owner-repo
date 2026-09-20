@@ -46,6 +46,61 @@ public sealed class AutoSaveCoordinatorTests
         Assert.Equal(1, saves);
     }
 
+    [Fact]
+    public async Task Flush_does_not_overlap_an_active_autosave()
+    {
+        var clock = new FakeDelayScheduler();
+        using var coordinator = new AutoSaveCoordinator(clock, TimeSpan.FromMilliseconds(10));
+
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var concurrent = 0;
+        var maxConcurrent = 0;
+        var calls = 0;
+
+        async Task SaveAsync(CancellationToken _)
+        {
+            var call = Interlocked.Increment(ref calls);
+            var nowConcurrent = Interlocked.Increment(ref concurrent);
+            UpdateMax(ref maxConcurrent, nowConcurrent);
+
+            try
+            {
+                if (call == 1)
+                {
+                    firstStarted.TrySetResult();
+                    await releaseFirst.Task;
+                }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref concurrent);
+            }
+        }
+
+        await coordinator.ScheduleAsync(SaveAsync);
+        await clock.AdvanceAsync(TimeSpan.FromMilliseconds(10));
+        await firstStarted.Task;
+
+        var flushTask = coordinator.FlushAsync(SaveAsync, CancellationToken.None);
+        await flushTask;
+
+        releaseFirst.TrySetResult();
+        await Task.Yield();
+
+        Assert.Equal(1, maxConcurrent);
+    }
+
+    private static void UpdateMax(ref int target, int candidate)
+    {
+        while (true)
+        {
+            var snapshot = Volatile.Read(ref target);
+            if (candidate <= snapshot) return;
+            if (Interlocked.CompareExchange(ref target, candidate, snapshot) == snapshot) return;
+        }
+    }
+
     private sealed class FakeDelayScheduler : IDelayScheduler
     {
         private readonly List<PendingDelay> _pending = new();
