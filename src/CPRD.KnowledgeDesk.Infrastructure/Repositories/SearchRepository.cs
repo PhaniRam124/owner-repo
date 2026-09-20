@@ -39,6 +39,37 @@ public sealed class SearchRepository
         await insert.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task RefreshFolderSubtreeAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Guid folderId,
+        CancellationToken cancellationToken)
+    {
+        var noteIds = new List<Guid>();
+        await using (var command = connection.CreateCommand())
+        {
+            command.Transaction = transaction;
+            command.CommandText = """
+                WITH RECURSIVE subtree(id) AS (
+                  SELECT $folderId
+                  UNION ALL
+                  SELECT f.id FROM folders f JOIN subtree s ON f.parent_id=s.id
+                )
+                SELECT n.id
+                  FROM notes n
+                 WHERE n.folder_id IN (SELECT id FROM subtree)
+                   AND n.deleted_at_utc IS NULL
+                """;
+            command.Parameters.AddWithValue("$folderId", folderId.ToString("D"));
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                noteIds.Add(Guid.Parse(reader.GetString(0)));
+        }
+
+        foreach (var noteId in noteIds)
+            await RefreshAsync(connection, transaction, noteId, cancellationToken);
+    }
+
     private static async Task<string> GetFolderPathAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
