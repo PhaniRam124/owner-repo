@@ -30,7 +30,9 @@ public sealed class SearchRepository
             INSERT INTO notes_fts(note_id,title,plain_text,tags_text,folder_path,note_type,structured_text)
             SELECT n.id,n.title,n.plain_text,
                    COALESCE((SELECT group_concat(t.name,' ') FROM note_tags nt JOIN tags t ON t.id=nt.tag_id WHERE nt.note_id=n.id),''),
-                   $folderPath,n.note_type,n.structured_json
+                   $folderPath,n.note_type,
+                   n.structured_json || ' ' ||
+                   COALESCE((SELECT group_concat(a.filename,' ') FROM attachments a WHERE a.note_id=n.id),'')
               FROM notes n
              WHERE n.id=$id AND n.deleted_at_utc IS NULL
             """;
