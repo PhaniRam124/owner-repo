@@ -22,6 +22,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private string _saveState = "Saved";
     private string _saveStatus = "No note selected";
     private bool _loading;
+    private int _documentVersion;
     private DateTimeOffset _lastRevisionAtUtc = DateTimeOffset.MinValue;
 
     public EditorViewModel(INoteService notes)
@@ -108,6 +109,12 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         private set => SetProperty(ref _saveStatus, value);
     }
 
+    public int DocumentVersion
+    {
+        get => _documentVersion;
+        private set => SetProperty(ref _documentVersion, value);
+    }
+
     public void Load(Note note)
     {
         _loading = true;
@@ -122,6 +129,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             IsPinned = note.IsPinned;
             SaveState = "Saved";
             SaveStatus = "Saved";
+            DocumentVersion++;
         }
         finally
         {
@@ -143,6 +151,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             IsPinned = false;
             SaveState = "Saved";
             SaveStatus = "No note selected";
+            DocumentVersion++;
         }
         finally
         {
