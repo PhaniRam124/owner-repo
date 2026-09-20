@@ -6,4 +6,7 @@
     <ProjectReference Include="../CPRD.KnowledgeDesk.Core/CPRD.KnowledgeDesk.Core.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data/Schema.sql" />
+  </ItemGroup>
 </Project>
