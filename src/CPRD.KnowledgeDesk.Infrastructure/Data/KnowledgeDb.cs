@@ -22,7 +22,8 @@ public sealed class KnowledgeDb
             DataSource = _paths.DatabasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared,
-            ForeignKeys = true
+            ForeignKeys = true,
+            DefaultTimeout = 10
         };
         return new SqliteConnection(builder.ToString());
     }
@@ -37,6 +38,17 @@ public sealed class KnowledgeDb
 
         await using var connection = OpenConnection();
         await connection.OpenAsync(cancellationToken);
+
+        await using (var pragmaCommand = connection.CreateCommand())
+        {
+            pragmaCommand.CommandText = """
+                PRAGMA journal_mode=WAL;
+                PRAGMA synchronous=NORMAL;
+                PRAGMA busy_timeout=10000;
+                """;
+            await pragmaCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
         await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
         await using (var schemaCommand = connection.CreateCommand())
