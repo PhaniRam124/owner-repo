@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using CPRD.KnowledgeDesk.Core.Services;
 using Microsoft.Win32;
 using System.ComponentModel;
