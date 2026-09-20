@@ -83,10 +83,12 @@ public sealed class AutoSaveCoordinatorTests
         await firstStarted.Task;
 
         var flushTask = coordinator.FlushAsync(SaveAsync, CancellationToken.None);
-        await flushTask;
+        await Task.Yield();
+
+        Assert.False(flushTask.IsCompleted);
 
         releaseFirst.TrySetResult();
-        await Task.Yield();
+        await flushTask;
 
         Assert.Equal(1, maxConcurrent);
     }
