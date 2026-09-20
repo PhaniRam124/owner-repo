@@ -11,8 +11,8 @@
     <DockPanel Background="{StaticResource CanvasBrush}">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New Note"/>
-                <MenuItem Header="Quick _Note"/>
+                <MenuItem Header="_New Note" Click="QuickCapture_Click"/>
+                <MenuItem Header="Quick _Note" Click="QuickCapture_Click"/>
                 <Separator/>
                 <MenuItem Header="_Import"/>
                 <MenuItem Header="_Export"/>
@@ -82,7 +82,7 @@
 
                 <Button Grid.Column="3" Content="+ Quick Note" Margin="14,0,0,0"
                         Background="{StaticResource CopperBrush}" Foreground="White"
-                        Padding="14,8"/>
+                        Padding="14,8" Click="QuickCapture_Click"/>
             </Grid>
         </Border>
 
@@ -145,7 +145,8 @@
                         <TextBlock Text="NOTES" Foreground="{StaticResource MutedBrush}"
                                    FontSize="10" FontWeight="SemiBold" Margin="4,4,0,7"/>
                         <Button Content="+ New Note" HorizontalAlignment="Stretch"
-                                Background="{StaticResource TealBrush}" Foreground="White" Margin="0,0,0,8"/>
+                                Background="{StaticResource TealBrush}" Foreground="White"
+                                Margin="0,0,0,8" Click="QuickCapture_Click"/>
                     </StackPanel>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -188,14 +189,60 @@
             <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" Background="{StaticResource BorderBrush}"/>
 
             <Border Grid.Column="4" Background="{StaticResource CanvasBrush}">
-                <TabControl BorderThickness="0" Background="Transparent">
-                    <TabItem Header="Editor">
-                        <views:EditorView DataContext="{Binding Editor}"/>
-                    </TabItem>
-                    <TabItem Header="Dashboard">
-                        <views:DashboardView DataContext="{Binding Dashboard}"/>
-                    </TabItem>
-                </TabControl>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="8,5">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding WorkspaceNotes}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource LavenderSoftBrush}"
+                                                BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Margin="2"
+                                                Padding="3">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="{Binding Title}"
+                                                        BorderThickness="0"
+                                                        Background="Transparent"
+                                                        Padding="8,4"
+                                                        Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding Id}"/>
+                                                <Button Content="×"
+                                                        ToolTip="Close workspace note"
+                                                        BorderThickness="0"
+                                                        Background="Transparent"
+                                                        Padding="5,2"
+                                                        Command="{Binding DataContext.CloseWorkspaceNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding Id}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
+                        <TabItem Header="Editor">
+                            <views:EditorView DataContext="{Binding Editor}"/>
+                        </TabItem>
+                        <TabItem Header="Dashboard">
+                            <views:DashboardView DataContext="{Binding Dashboard}"/>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
             </Border>
         </Grid>
     </DockPanel>
