@@ -48,7 +48,7 @@ jobs:
 
       - name: Publish self-contained Windows app
         shell: pwsh
-        run: ./eng/windows/publish.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0-beta3
+        run: ./eng/windows/publish.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0-beta4
 
       - name: Install Inno Setup
         shell: pwsh
@@ -65,15 +65,15 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: CPRD-Knowledge-Desk-Setup-1.0.0-beta3
-          path: artifacts/release/CPRD-Knowledge-Desk-Setup-1.0.0-beta3.exe
+          name: CPRD-Knowledge-Desk-Setup-1.0.0-beta4
+          path: artifacts/release/CPRD-Knowledge-Desk-Setup-1.0.0-beta4.exe
           if-no-files-found: error
           retention-days: 30
 
       - name: Upload portable package
         uses: actions/upload-artifact@v4
         with:
-          name: CPRD-Knowledge-Desk-1.0.0-beta3-portable
-          path: artifacts/release/CPRD-Knowledge-Desk-1.0.0-beta3-win-x64-portable.zip
+          name: CPRD-Knowledge-Desk-1.0.0-beta4-portable
+          path: artifacts/release/CPRD-Knowledge-Desk-1.0.0-beta4-win-x64-portable.zip
           if-no-files-found: error
           retention-days: 30
