@@ -48,7 +48,8 @@
                          AcceptsTab="True"
                          VerticalScrollBarVisibility="Auto"
                          SpellCheck.IsEnabled="True"
-                         TextChanged="EditorBox_TextChanged"/>
+                         TextChanged="EditorBox_TextChanged"
+                         LostKeyboardFocus="EditorBox_LostKeyboardFocus"/>
         </Border>
 
         <DockPanel Grid.Row="3" Margin="2,8,2,0">
