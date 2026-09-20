@@ -66,8 +66,8 @@ public sealed class EditorRecoveryTests
             Task.FromResult(new NoteRevision(1, note.Id, 1, note.Title, note.ContentPackage, note.PlainText, note.StructuredJson, DateTimeOffset.UtcNow));
         public Task<IReadOnlyList<NoteRevision>> ListAsync(Guid noteId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<NoteRevision>>(Array.Empty<NoteRevision>());
-        public Task<Note> RestoreAsync(long revisionId, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+        public Task RestoreAsync(Guid noteId, long revisionId, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 
     private sealed class FakeNoteService : INoteService
