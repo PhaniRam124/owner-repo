@@ -108,8 +108,8 @@ public sealed class ExportImportService : IExportImportService
             if (await IsExactDuplicateAsync(
                 connection,
                 transaction,
-                item.Title,
-                item.PlainText,
+                item.Title ?? string.Empty,
+                item.PlainText ?? string.Empty,
                 cancellationToken))
             {
                 await transaction.RollbackAsync(cancellationToken);
