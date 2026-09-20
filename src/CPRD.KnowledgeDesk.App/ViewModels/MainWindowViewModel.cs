@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CPRD.KnowledgeDesk.App.Services;
 using CPRD.KnowledgeDesk.Core.Models;
 using CPRD.KnowledgeDesk.Core.Services;
 
@@ -13,6 +14,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private readonly ITagService _tags;
     private readonly ISearchService _search;
     private readonly IDashboardService _dashboard;
+    private readonly WorkspaceService _workspace;
     private Guid? _selectedFolderId;
     private string _globalSearchText = string.Empty;
     private string _statusText = "Ready";
@@ -23,12 +25,24 @@ public sealed class MainWindowViewModel : ObservableObject
         ITagService tags,
         ISearchService search,
         IDashboardService dashboard)
+        : this(folders, notes, tags, search, dashboard, new WorkspaceService())
+    {
+    }
+
+    public MainWindowViewModel(
+        IFolderService folders,
+        INoteService notes,
+        ITagService tags,
+        ISearchService search,
+        IDashboardService dashboard,
+        WorkspaceService workspace)
     {
         _folders = folders;
         _notes = notes;
         _tags = tags;
         _search = search;
         _dashboard = dashboard;
+        _workspace = workspace;
 
         Dashboard = new DashboardViewModel(_dashboard);
         Editor = new EditorViewModel(_notes);
@@ -36,11 +50,14 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
         RefreshDashboardCommand = new AsyncRelayCommand(RefreshDashboardAsync);
+        CloseWorkspaceNoteCommand = new AsyncRelayCommand<Guid>(CloseWorkspaceNoteAsync);
+        CloseActiveWorkspaceCommand = new AsyncRelayCommand(CloseActiveWorkspaceAsync, () => Editor.CurrentNote is not null);
     }
 
     public ObservableCollection<Folder> Folders { get; } = new();
     public ObservableCollection<Note> Notes { get; } = new();
     public ObservableCollection<SearchHit> SearchResults { get; } = new();
+    public ObservableCollection<Note> WorkspaceNotes { get; } = new();
 
     public DashboardViewModel Dashboard { get; }
     public EditorViewModel Editor { get; }
@@ -49,6 +66,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
     public IAsyncRelayCommand SearchCommand { get; }
     public IAsyncRelayCommand RefreshDashboardCommand { get; }
+    public AsyncRelayCommand<Guid> CloseWorkspaceNoteCommand { get; }
+    public IAsyncRelayCommand CloseActiveWorkspaceCommand { get; }
 
     public Guid? SelectedFolderId
     {
@@ -94,8 +113,46 @@ public sealed class MainWindowViewModel : ObservableObject
         if (note is null) return;
 
         await _notes.MarkOpenedAsync(note.Id, DateTimeOffset.UtcNow, CancellationToken.None);
+        _workspace.Open(note.Id);
+
+        var existing = WorkspaceNotes.FirstOrDefault(item => item.Id == note.Id);
+        if (existing is not null)
+            WorkspaceNotes.Remove(existing);
+        WorkspaceNotes.Add(note);
+
+        while (WorkspaceNotes.Count > WorkspaceService.MaximumOpenNotes)
+            WorkspaceNotes.RemoveAt(0);
+
         Editor.Load(note);
+        CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
         StatusText = note.Title;
+    }
+
+    private async Task CloseWorkspaceNoteAsync(Guid noteId)
+    {
+        _workspace.Close(noteId);
+        var item = WorkspaceNotes.FirstOrDefault(note => note.Id == noteId);
+        if (item is not null)
+            WorkspaceNotes.Remove(item);
+
+        if (Editor.CurrentNote?.Id != noteId)
+            return;
+
+        if (WorkspaceNotes.Count == 0)
+        {
+            Editor.Clear();
+            CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
+            StatusText = "Workspace empty";
+            return;
+        }
+
+        await SelectNoteAsync(WorkspaceNotes[^1].Id);
+    }
+
+    private Task CloseActiveWorkspaceAsync()
+    {
+        var noteId = Editor.CurrentNote?.Id;
+        return noteId is null ? Task.CompletedTask : CloseWorkspaceNoteAsync(noteId.Value);
     }
 
     private async Task SearchAsync()
