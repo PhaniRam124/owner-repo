@@ -80,6 +80,7 @@ public partial class MainWindow : Window
         IsEnabled = false;
         try
         {
+            await EditorPane.FlushEditorContentAsync();
             await _viewModel.FlushEditorAsync();
         }
         finally
