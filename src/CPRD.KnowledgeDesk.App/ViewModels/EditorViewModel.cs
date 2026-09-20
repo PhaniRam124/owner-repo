@@ -12,6 +12,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private readonly IRevisionService? _revisions;
     private readonly AutoSaveCoordinator _autoSave;
     private readonly IRecoveryService? _recovery;
+    private readonly IAppLogService? _log;
     private readonly AutoSaveCoordinator? _recoveryCoordinator;
     private readonly bool _ownsAutoSave;
     private Note? _note;
@@ -33,12 +34,13 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             null,
             new AutoSaveCoordinator(new SystemDelayScheduler(), TimeSpan.FromMilliseconds(750)),
             null,
+            null,
             true)
     {
     }
 
     public EditorViewModel(INoteService notes, IRevisionService revisions, AutoSaveCoordinator autoSave)
-        : this(notes, revisions, autoSave, null, false)
+        : this(notes, revisions, autoSave, null, null, false)
     {
     }
 
@@ -47,7 +49,17 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         IRevisionService revisions,
         AutoSaveCoordinator autoSave,
         IRecoveryService recovery)
-        : this(notes, revisions, autoSave, recovery, false)
+        : this(notes, revisions, autoSave, recovery, null, false)
+    {
+    }
+
+    public EditorViewModel(
+        INoteService notes,
+        IRevisionService revisions,
+        AutoSaveCoordinator autoSave,
+        IRecoveryService recovery,
+        IAppLogService log)
+        : this(notes, revisions, autoSave, recovery, log, false)
     {
     }
 
@@ -56,12 +68,14 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         IRevisionService? revisions,
         AutoSaveCoordinator autoSave,
         IRecoveryService? recovery,
+        IAppLogService? log,
         bool ownsAutoSave)
     {
         _notes = notes;
         _revisions = revisions;
         _autoSave = autoSave;
         _recovery = recovery;
+        _log = log;
         _recoveryCoordinator = recovery is null
             ? null
             : new AutoSaveCoordinator(
@@ -276,10 +290,17 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             SaveState = "Saved";
             SaveStatus = $"Saved {DateTime.Now:t}";
         }
-        catch
+        catch (Exception ex)
         {
             SaveState = "Error";
-            SaveStatus = "Save failed — press Ctrl+S to retry";
+            SaveStatus = "Save Failed — press Ctrl+S to retry";
+
+            if (_log is not null)
+                await _log.LogAsync(
+                    AppLogLevel.Error,
+                    $"Failed to save note '{current.Id}'.",
+                    ex,
+                    cancellationToken);
         }
     }
 
