@@ -1,9 +1,12 @@
+using CPRD.KnowledgeDesk.Infrastructure.Data;
 using Microsoft.Data.Sqlite;
 
 namespace CPRD.KnowledgeDesk.Infrastructure.Repositories;
 
 public sealed class SearchRepository
 {
+    public SearchRepository(KnowledgeDb db) { }
+
     public async Task RefreshAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
