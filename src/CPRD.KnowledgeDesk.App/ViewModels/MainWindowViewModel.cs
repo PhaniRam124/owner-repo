@@ -25,7 +25,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ITagService tags,
         ISearchService search,
         IDashboardService dashboard)
-        : this(folders, notes, tags, search, dashboard, new WorkspaceService())
+        : this(folders, notes, tags, search, dashboard, new WorkspaceService(), new EditorViewModel(notes))
     {
     }
 
@@ -36,6 +36,18 @@ public sealed class MainWindowViewModel : ObservableObject
         ISearchService search,
         IDashboardService dashboard,
         WorkspaceService workspace)
+        : this(folders, notes, tags, search, dashboard, workspace, new EditorViewModel(notes))
+    {
+    }
+
+    public MainWindowViewModel(
+        IFolderService folders,
+        INoteService notes,
+        ITagService tags,
+        ISearchService search,
+        IDashboardService dashboard,
+        WorkspaceService workspace,
+        EditorViewModel editor)
     {
         _folders = folders;
         _notes = notes;
@@ -45,7 +57,7 @@ public sealed class MainWindowViewModel : ObservableObject
         _workspace = workspace;
 
         Dashboard = new DashboardViewModel(_dashboard);
-        Editor = new EditorViewModel(_notes);
+        Editor = editor;
         SelectFolderCommand = new AsyncRelayCommand<Guid>(SelectFolderAsync);
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
@@ -97,8 +109,13 @@ public sealed class MainWindowViewModel : ObservableObject
         StatusText = "Ready";
     }
 
+    public Task FlushEditorAsync(CancellationToken cancellationToken = default) =>
+        Editor.FlushAsync(true, cancellationToken);
+
     private async Task SelectFolderAsync(Guid folderId)
     {
+        await Editor.FlushAsync(true, CancellationToken.None);
+
         SelectedFolderId = folderId;
         Notes.Clear();
         foreach (var note in await _notes.ListByFolderAsync(folderId, CancellationToken.None))
@@ -109,6 +126,9 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task SelectNoteAsync(Guid noteId)
     {
+        if (Editor.CurrentNote?.Id != noteId)
+            await Editor.FlushAsync(true, CancellationToken.None);
+
         var note = await _notes.GetAsync(noteId, CancellationToken.None);
         if (note is null) return;
 
@@ -130,6 +150,9 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private async Task CloseWorkspaceNoteAsync(Guid noteId)
     {
+        if (Editor.CurrentNote?.Id == noteId)
+            await Editor.FlushAsync(true, CancellationToken.None);
+
         _workspace.Close(noteId);
         var item = WorkspaceNotes.FirstOrDefault(note => note.Id == noteId);
         if (item is not null)
