@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -9,6 +10,7 @@ namespace CPRD.KnowledgeDesk.App.Views;
 public partial class EditorView : UserControl
 {
     private readonly FlowDocumentSerializer _serializer = new();
+    private EditorViewModel? _subscribedViewModel;
     private bool _loading;
 
     public EditorView()
@@ -17,7 +19,24 @@ public partial class EditorView : UserControl
         Loaded += (_, _) => LoadDocument();
     }
 
-    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) => LoadDocument();
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (_subscribedViewModel is not null)
+            _subscribedViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+
+        _subscribedViewModel = DataContext as EditorViewModel;
+
+        if (_subscribedViewModel is not null)
+            _subscribedViewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+        LoadDocument();
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(EditorViewModel.DocumentVersion))
+            LoadDocument();
+    }
 
     private void LoadDocument()
     {
