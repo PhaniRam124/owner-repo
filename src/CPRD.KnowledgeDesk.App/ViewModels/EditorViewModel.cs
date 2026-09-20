@@ -21,9 +21,11 @@ public sealed class EditorViewModel : ObservableObject
     {
         _notes = notes;
         SaveNowCommand = new AsyncRelayCommand(SaveAsync, () => _note is not null);
+        ToggleFavoriteCommand = new RelayCommand(ToggleFavorite, () => _note is not null);
     }
 
     public IAsyncRelayCommand SaveNowCommand { get; }
+    public IRelayCommand ToggleFavoriteCommand { get; }
 
     public Note? CurrentNote
     {
@@ -31,7 +33,10 @@ public sealed class EditorViewModel : ObservableObject
         private set
         {
             if (SetProperty(ref _note, value))
+            {
                 SaveNowCommand.NotifyCanExecuteChanged();
+                ToggleFavoriteCommand.NotifyCanExecuteChanged();
+            }
         }
     }
 
@@ -53,6 +58,25 @@ public sealed class EditorViewModel : ObservableObject
         IsFavorite = note.IsFavorite;
         IsPinned = note.IsPinned;
         SaveStatus = "Loaded";
+    }
+
+    public void Clear()
+    {
+        CurrentNote = null;
+        Title = string.Empty;
+        ContentPackage = string.Empty;
+        PlainText = string.Empty;
+        StructuredJson = "{}";
+        IsFavorite = false;
+        IsPinned = false;
+        SaveStatus = "No note selected";
+    }
+
+    private void ToggleFavorite()
+    {
+        if (CurrentNote is null) return;
+        IsFavorite = !IsFavorite;
+        SaveStatus = IsFavorite ? "Favorite enabled" : "Favorite disabled";
     }
 
     private async Task SaveAsync()
