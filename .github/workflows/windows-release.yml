@@ -1,0 +1,71 @@
+name: CPRD Knowledge Desk Release Candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/knowledge-desk-v1
+    paths:
+      - 'src/**'
+      - 'installer/**'
+      - 'eng/windows/publish.ps1'
+      - '.github/workflows/windows-release.yml'
+      - 'CPRD.KnowledgeDesk.sln'
+      - 'Directory.Build.props'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cprd-knowledge-desk-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-candidate:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify, test, and build
+        shell: pwsh
+        run: ./eng/windows/build.ps1 -Configuration Release
+
+      - name: Publish self-contained Windows app
+        shell: pwsh
+        run: ./eng/windows/publish.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0-beta1
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          & $iscc ".\installer\CPRDKnowledgeDesk.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed." }
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: CPRD-Knowledge-Desk-Setup-1.0.0-beta1
+          path: artifacts/release/CPRD-Knowledge-Desk-Setup-1.0.0-beta1.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload portable package
+        uses: actions/upload-artifact@v4
+        with:
+          name: CPRD-Knowledge-Desk-1.0.0-beta1-portable
+          path: artifacts/release/CPRD-Knowledge-Desk-1.0.0-beta1-win-x64-portable.zip
+          if-no-files-found: error
+          retention-days: 30
