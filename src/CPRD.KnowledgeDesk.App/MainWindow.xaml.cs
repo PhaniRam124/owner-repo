@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using CPRD.KnowledgeDesk.App.Services;
 using CPRD.KnowledgeDesk.App.ViewModels;
@@ -10,6 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly IServiceProvider _services;
     private readonly MainWindowViewModel _viewModel;
+    private bool _allowClose;
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -28,6 +30,8 @@ public partial class MainWindow : Window
             viewModel.Editor.SaveNowCommand,
             viewModel.CloseActiveWorkspaceCommand,
             viewModel.Editor.ToggleFavoriteCommand);
+
+        Closing += OnClosing;
     }
 
     private void FocusSearch()
@@ -48,6 +52,23 @@ public partial class MainWindow : Window
 
     private void QuickCapture_Click(object sender, RoutedEventArgs e) => ShowQuickCapture();
 
-    private void Exit_Click(object sender, RoutedEventArgs e) =>
-        Application.Current.Shutdown();
+    private async void OnClosing(object? sender, CancelEventArgs e)
+    {
+        if (_allowClose) return;
+
+        e.Cancel = true;
+        IsEnabled = false;
+        try
+        {
+            await _viewModel.FlushEditorAsync();
+        }
+        finally
+        {
+            _allowClose = true;
+            IsEnabled = true;
+            Close();
+        }
+    }
+
+    private void Exit_Click(object sender, RoutedEventArgs e) => Close();
 }
