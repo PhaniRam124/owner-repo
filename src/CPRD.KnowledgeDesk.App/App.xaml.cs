@@ -1,5 +1,7 @@
 using System.Windows;
+using CPRD.KnowledgeDesk.App.Services;
 using CPRD.KnowledgeDesk.App.ViewModels;
+using CPRD.KnowledgeDesk.App.Views;
 using CPRD.KnowledgeDesk.Core.Services;
 using CPRD.KnowledgeDesk.Infrastructure.Data;
 using CPRD.KnowledgeDesk.Infrastructure.Repositories;
@@ -35,8 +37,12 @@ public partial class App : Application
             collection.AddSingleton<ISearchService, SearchService>();
             collection.AddSingleton<IDashboardService, DashboardService>();
 
+            collection.AddSingleton<WorkspaceService>();
+            collection.AddSingleton<KeyboardShortcutService>();
             collection.AddSingleton<MainWindowViewModel>();
             collection.AddSingleton<MainWindow>();
+            collection.AddTransient<QuickCaptureViewModel>();
+            collection.AddTransient<QuickCaptureWindow>();
 
             _services = collection.BuildServiceProvider();
 
