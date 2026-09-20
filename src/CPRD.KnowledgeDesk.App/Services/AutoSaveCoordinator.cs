@@ -37,7 +37,18 @@ public sealed class AutoSaveCoordinator : IDisposable
         return Task.CompletedTask;
     }
 
-    public async Task FlushAsync(CancellationToken cancellationToken)
+    public Task FlushAsync(CancellationToken cancellationToken) =>
+        FlushCoreAsync(null, cancellationToken);
+
+    public Task FlushAsync(Func<CancellationToken, Task> fallbackSave, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(fallbackSave);
+        return FlushCoreAsync(fallbackSave, cancellationToken);
+    }
+
+    private async Task FlushCoreAsync(
+        Func<CancellationToken, Task>? fallbackSave,
+        CancellationToken cancellationToken)
     {
         Func<CancellationToken, Task>? save;
 
@@ -45,7 +56,7 @@ public sealed class AutoSaveCoordinator : IDisposable
         {
             ThrowIfDisposed();
 
-            save = _pendingSave;
+            save = _pendingSave ?? fallbackSave;
             _pendingSave = null;
 
             _pendingCts?.Cancel();
