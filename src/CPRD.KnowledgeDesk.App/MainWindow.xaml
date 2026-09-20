@@ -18,10 +18,10 @@
                 <MenuItem Header="_New Note" Command="{Binding CreateNewNoteCommand}"/>
                 <MenuItem Header="Quick _Note" Click="QuickCapture_Click"/>
                 <Separator/>
-                <MenuItem Header="_Import"/>
-                <MenuItem Header="_Export"/>
-                <MenuItem Header="_Backup"/>
-                <MenuItem Header="_Restore"/>
+                <MenuItem Header="_Import Notes..." Click="Import_Click"/>
+                <MenuItem Header="_Export All Notes..." Click="Export_Click"/>
+                <MenuItem Header="_Backup Now" Click="Backup_Click"/>
+                <MenuItem Header="_Restore Backup..." Click="Restore_Click"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="Exit_Click"/>
             </MenuItem>
@@ -39,7 +39,9 @@
             <MenuItem Header="_Tools">
                 <MenuItem Header="Duplicate Finder"/>
                 <MenuItem Header="Migration Center"/>
-                <MenuItem Header="Backup Center"/>
+                <MenuItem Header="Backup Folder" Click="OpenBackupsFolder_Click"/>
+                <MenuItem Header="Open Data Folder" Click="OpenDataFolder_Click"/>
+                <MenuItem Header="Open Diagnostic Logs" Click="OpenLogsFolder_Click"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="Keyboard Shortcuts"/>
