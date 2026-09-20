@@ -240,7 +240,7 @@
 
                     <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
                         <TabItem Header="Editor">
-                            <views:EditorView DataContext="{Binding Editor}"/>
+                            <views:EditorView x:Name="EditorPane" DataContext="{Binding Editor}"/>
                         </TabItem>
                         <TabItem Header="Dashboard">
                             <views:DashboardView DataContext="{Binding Dashboard}"/>
