@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="CanvasColor">#FFF8F5EF</Color>
+    <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
+    <Color x:Key="SurfaceAltColor">#FFF3EFE8</Color>
+    <Color x:Key="GraphiteColor">#FF2E2A31</Color>
+    <Color x:Key="MutedColor">#FF756E78</Color>
+    <Color x:Key="LavenderColor">#FF7A6FA5</Color>
+    <Color x:Key="LavenderSoftColor">#FFECE8F5</Color>
+    <Color x:Key="TealColor">#FF2C8A82</Color>
+    <Color x:Key="CopperColor">#FFC27A47</Color>
+    <Color x:Key="PlumColor">#FF754B68</Color>
+    <Color x:Key="BorderColor">#FFE1D9D1</Color>
+
+    <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="GraphiteBrush" Color="{StaticResource GraphiteColor}" />
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}" />
+    <SolidColorBrush x:Key="LavenderBrush" Color="{StaticResource LavenderColor}" />
+    <SolidColorBrush x:Key="LavenderSoftBrush" Color="{StaticResource LavenderSoftColor}" />
+    <SolidColorBrush x:Key="TealBrush" Color="{StaticResource TealColor}" />
+    <SolidColorBrush x:Key="CopperBrush" Color="{StaticResource CopperColor}" />
+    <SolidColorBrush x:Key="PlumBrush" Color="{StaticResource PlumColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+</ResourceDictionary>
