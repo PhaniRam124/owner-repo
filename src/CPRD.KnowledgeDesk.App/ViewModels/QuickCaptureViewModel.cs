@@ -20,6 +20,8 @@ public sealed class QuickCaptureViewModel : ObservableObject
 
     private readonly INoteService _notes;
     private readonly IFolderService _folders;
+    private readonly IDuplicateDetectionService? _duplicates;
+    private string? _duplicateOverrideFingerprint;
     private string _title = string.Empty;
     private string _plainText = string.Empty;
     private string _tagsText = string.Empty;
@@ -30,9 +32,18 @@ public sealed class QuickCaptureViewModel : ObservableObject
     private string _status = "Ready";
 
     public QuickCaptureViewModel(INoteService notes, IFolderService folders)
+        : this(notes, folders, null)
+    {
+    }
+
+    public QuickCaptureViewModel(
+        INoteService notes,
+        IFolderService folders,
+        IDuplicateDetectionService? duplicates)
     {
         _notes = notes;
         _folders = folders;
+        _duplicates = duplicates;
         SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
     }
 
@@ -48,11 +59,22 @@ public sealed class QuickCaptureViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _title, value))
+            {
+                _duplicateOverrideFingerprint = null;
                 SaveCommand.NotifyCanExecuteChanged();
+            }
         }
     }
 
-    public string PlainText { get => _plainText; set => SetProperty(ref _plainText, value); }
+    public string PlainText
+    {
+        get => _plainText;
+        set
+        {
+            if (SetProperty(ref _plainText, value))
+                _duplicateOverrideFingerprint = null;
+        }
+    }
     public string TagsText { get => _tagsText; set => SetProperty(ref _tagsText, value); }
     public string SelectedNoteType { get => _selectedNoteType; set => SetProperty(ref _selectedNoteType, value); }
 
@@ -85,6 +107,23 @@ public sealed class QuickCaptureViewModel : ObservableObject
     private async Task SaveAsync()
     {
         if (SelectedFolder is null) return;
+
+        var fingerprint = $"{Title.Trim()}\n{PlainText.Trim()}";
+        if (_duplicates is not null &&
+            !string.Equals(_duplicateOverrideFingerprint, fingerprint, StringComparison.Ordinal))
+        {
+            var candidates = await _duplicates.FindCandidatesAsync(
+                new DuplicateProbe(Title, PlainText),
+                CancellationToken.None);
+
+            var duplicate = candidates.FirstOrDefault();
+            if (duplicate is not null)
+            {
+                _duplicateOverrideFingerprint = fingerprint;
+                Status = $"Possible duplicate: {duplicate.Title}. Click Save again to keep both.";
+                return;
+            }
+        }
 
         var tags = TagsText
             .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
@@ -120,6 +159,7 @@ public sealed class QuickCaptureViewModel : ObservableObject
                 CancellationToken.None);
         }
 
+        _duplicateOverrideFingerprint = null;
         Status = "Saved";
         Saved?.Invoke(this, note.Id);
     }
