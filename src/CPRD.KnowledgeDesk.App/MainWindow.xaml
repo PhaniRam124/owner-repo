@@ -14,7 +14,7 @@
     <DockPanel Background="{StaticResource CanvasBrush}">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New Note" Click="QuickCapture_Click"/>
+                <MenuItem Header="_New Note" Command="{Binding CreateNewNoteCommand}"/>
                 <MenuItem Header="Quick _Note" Click="QuickCapture_Click"/>
                 <Separator/>
                 <MenuItem Header="_Import"/>
@@ -149,7 +149,8 @@
                                    FontSize="10" FontWeight="SemiBold" Margin="4,4,0,7"/>
                         <Button Content="+ New Note" HorizontalAlignment="Stretch"
                                 Background="{StaticResource TealBrush}" Foreground="White"
-                                Margin="0,0,0,8" Click="QuickCapture_Click"/>
+                                Margin="0,0,0,8"
+                                Command="{Binding CreateNewNoteCommand}"/>
                     </StackPanel>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
