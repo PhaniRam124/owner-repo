@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:CPRD.KnowledgeDesk.App.Views"
         Title="CPRD Knowledge Desk"
+        Icon="{StaticResource AppIcon}"
         Width="1440"
         Height="880"
         MinWidth="900"
@@ -58,9 +59,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="{StaticResource PlumBrush}" CornerRadius="8" Width="34" Height="34">
-                        <TextBlock Text="K" Foreground="White" FontWeight="Bold" FontSize="18"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border Background="{StaticResource PlumBrush}" CornerRadius="8" Width="34" Height="34" Padding="3">
+                        <Image Source="{StaticResource AppIcon}" Stretch="Uniform"/>
                     </Border>
                     <StackPanel Margin="10,0,0,0">
                         <TextBlock Text="CPRD Knowledge Desk" FontWeight="SemiBold" FontSize="18"/>
