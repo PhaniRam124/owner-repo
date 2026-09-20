@@ -1,3 +1,4 @@
+using System.IO;
 using CPRD.KnowledgeDesk.App.Services;
 using CPRD.KnowledgeDesk.App.ViewModels;
 using CPRD.KnowledgeDesk.Core.Models;
