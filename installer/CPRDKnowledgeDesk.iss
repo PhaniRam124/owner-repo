@@ -1,5 +1,5 @@
 #define MyAppName "CPRD Knowledge Desk"
-#define MyAppVersion "1.0.0-beta1"
+#define MyAppVersion "1.0.0-beta2"
 #define MyAppPublisher "CPRD"
 #define MyAppExeName "CPRD.KnowledgeDesk.App.exe"
 
@@ -12,7 +12,7 @@ DefaultDirName={localappdata}\Programs\CPRD Knowledge Desk
 DefaultGroupName=CPRD Knowledge Desk
 DisableProgramGroupPage=yes
 OutputDir=..\artifacts\release
-OutputBaseFilename=CPRD-Knowledge-Desk-Setup-1.0.0-beta1
+OutputBaseFilename=CPRD-Knowledge-Desk-Setup-1.0.0-beta2
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
