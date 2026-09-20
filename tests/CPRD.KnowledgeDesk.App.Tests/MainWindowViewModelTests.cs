@@ -44,6 +44,14 @@ public sealed class MainWindowViewModelTests
         }
         public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) =>
             Task.CompletedTask;
+        public Task ArchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UnarchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task RestoreFromTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task DeletePermanentlyAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<int> PurgeTrashOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) => Task.FromResult(0);
+        public Task<IReadOnlyList<Note>> ListTrashAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Note>>(Array.Empty<Note>());
     }
 
     private sealed class FakeFolderService : IFolderService
