@@ -30,15 +30,23 @@ public partial class App : Application
             collection.AddSingleton<FolderRepository>();
             collection.AddSingleton<TagRepository>();
             collection.AddSingleton<SearchRepository>();
+            collection.AddSingleton<RevisionRepository>();
 
             collection.AddSingleton<INoteService, NoteService>();
             collection.AddSingleton<IFolderService, FolderService>();
             collection.AddSingleton<ITagService, TagService>();
             collection.AddSingleton<ISearchService, SearchService>();
             collection.AddSingleton<IDashboardService, DashboardService>();
+            collection.AddSingleton<IRevisionService, RevisionService>();
+
+            collection.AddSingleton<IDelayScheduler, SystemDelayScheduler>();
+            collection.AddSingleton(sp => new AutoSaveCoordinator(
+                sp.GetRequiredService<IDelayScheduler>(),
+                TimeSpan.FromMilliseconds(750)));
 
             collection.AddSingleton<WorkspaceService>();
             collection.AddSingleton<KeyboardShortcutService>();
+            collection.AddSingleton<EditorViewModel>();
             collection.AddSingleton<MainWindowViewModel>();
             collection.AddSingleton<MainWindow>();
             collection.AddTransient<QuickCaptureViewModel>();
