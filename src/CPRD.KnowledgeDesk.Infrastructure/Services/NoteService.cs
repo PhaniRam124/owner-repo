@@ -72,6 +72,66 @@ public sealed class NoteService : INoteService
     public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) =>
         _notes.MarkOpenedAsync(id, openedAtUtc, cancellationToken);
 
+    public Task<IReadOnlyList<Note>> ListTrashAsync(CancellationToken cancellationToken) =>
+        _notes.ListTrashAsync(cancellationToken);
+
+    public async Task ArchiveAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await _notes.SetArchivedAsync(connection, transaction, id, true, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task UnarchiveAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await _notes.SetArchivedAsync(connection, transaction, id, false, cancellationToken);
+        await _search.RefreshAsync(connection, transaction, id, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await _notes.SetDeletedAtAsync(connection, transaction, id, DateTimeOffset.UtcNow, cancellationToken);
+        await _search.RemoveAsync(connection, transaction, id, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task RestoreFromTrashAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await _notes.SetDeletedAtAsync(connection, transaction, id, null, cancellationToken);
+        await _search.RefreshAsync(connection, transaction, id, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task DeletePermanentlyAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await _search.RemoveAsync(connection, transaction, id, cancellationToken);
+        await _notes.DeleteAsync(connection, transaction, id, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task<int> PurgeTrashOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken)
+    {
+        var ids = await _notes.GetTrashIdsOlderThanAsync(cutoffUtc, cancellationToken);
+        foreach (var id in ids)
+            await DeletePermanentlyAsync(id, cancellationToken);
+        return ids.Count;
+    }
+
     private static string NormalizeTitle(string? title) =>
         string.IsNullOrWhiteSpace(title) ? "Untitled Note" : title.Trim();
 }
