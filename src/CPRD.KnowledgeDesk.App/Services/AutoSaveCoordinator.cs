@@ -7,6 +7,7 @@ public sealed class AutoSaveCoordinator : IDisposable
     private readonly TimeSpan _delay;
     private CancellationTokenSource? _pendingCts;
     private Func<CancellationToken, Task>? _pendingSave;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
     private bool _disposed;
 
     public AutoSaveCoordinator(IDelayScheduler delayScheduler, TimeSpan delay)
@@ -65,7 +66,7 @@ public sealed class AutoSaveCoordinator : IDisposable
         }
 
         if (save is not null)
-            await save(cancellationToken).ConfigureAwait(false);
+            await ExecuteSaveSeriallyAsync(save, cancellationToken).ConfigureAwait(false);
     }
 
     private Task RunAfterDelayAsync(CancellationTokenSource scheduledCts)
@@ -104,11 +105,26 @@ public sealed class AutoSaveCoordinator : IDisposable
         try
         {
             if (save is not null)
-                await save(CancellationToken.None).ConfigureAwait(false);
+                await ExecuteSaveSeriallyAsync(save, CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
             scheduledCts.Dispose();
+        }
+    }
+
+    private async Task ExecuteSaveSeriallyAsync(
+        Func<CancellationToken, Task> save,
+        CancellationToken cancellationToken)
+    {
+        await _saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await save(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _saveGate.Release();
         }
     }
 
@@ -123,6 +139,8 @@ public sealed class AutoSaveCoordinator : IDisposable
             _pendingCts?.Dispose();
             _pendingCts = null;
         }
+
+        _saveGate.Dispose();
     }
 
     private void ThrowIfDisposed()
