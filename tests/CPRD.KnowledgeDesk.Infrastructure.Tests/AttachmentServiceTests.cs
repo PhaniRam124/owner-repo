@@ -20,7 +20,7 @@ public sealed class AttachmentServiceTests
 
         Assert.True(File.Exists(attachment.StoredPath));
         Assert.Equal(await File.ReadAllBytesAsync(source), await File.ReadAllBytesAsync(attachment.StoredPath));
-        Assert.Equal(1, (await env.Attachments.ListAsync(note.Id, default)).Count);
+        Assert.Single(await env.Attachments.ListAsync(note.Id, default));
     }
 
     private sealed class TestEnvironment : IDisposable
