@@ -63,6 +63,7 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
         RefreshDashboardCommand = new AsyncRelayCommand(RefreshDashboardAsync);
+        CreateNewNoteCommand = new AsyncRelayCommand(CreateNewNoteAsync);
         CloseWorkspaceNoteCommand = new AsyncRelayCommand<Guid>(CloseWorkspaceNoteAsync);
         CloseActiveWorkspaceCommand = new AsyncRelayCommand(CloseActiveWorkspaceAsync, () => Editor.CurrentNote is not null);
     }
@@ -80,6 +81,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
     public IAsyncRelayCommand SearchCommand { get; }
     public IAsyncRelayCommand RefreshDashboardCommand { get; }
+    public IAsyncRelayCommand CreateNewNoteCommand { get; }
     public AsyncRelayCommand<Guid> CloseWorkspaceNoteCommand { get; }
     public IAsyncRelayCommand CloseActiveWorkspaceCommand { get; }
 
@@ -109,11 +111,68 @@ public sealed class MainWindowViewModel : ObservableObject
 
         await Dashboard.RefreshAsync();
         await Trash.RefreshAsync();
-        StatusText = "Ready";
+
+        var defaultFolder = Folders.FirstOrDefault(folder =>
+                !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))
+            ?? Folders.FirstOrDefault(folder => !folder.IsArchived);
+
+        if (defaultFolder is not null)
+            await SelectFolderAsync(defaultFolder.Id);
+        else
+            StatusText = "Create a folder to start adding notes.";
     }
 
     public Task FlushEditorAsync(CancellationToken cancellationToken = default) =>
         Editor.FlushAsync(true, cancellationToken);
+
+    private async Task CreateNewNoteAsync()
+    {
+        await Editor.FlushAsync(true, CancellationToken.None);
+
+        var folderId = SelectedFolderId
+            ?? Folders.FirstOrDefault(folder =>
+                    !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))?.Id
+            ?? Folders.FirstOrDefault(folder => !folder.IsArchived)?.Id;
+
+        if (folderId is null)
+        {
+            StatusText = "Create a folder before adding a note.";
+            return;
+        }
+
+        var note = await _notes.CreateAsync(
+            new NewNoteRequest(
+                "Untitled Note",
+                string.Empty,
+                string.Empty,
+                folderId.Value,
+                "Standard Note",
+                "{}",
+                Array.Empty<string>()),
+            CancellationToken.None);
+
+        SelectedFolderId = folderId.Value;
+        SearchResults.Clear();
+
+        var existing = Notes.FirstOrDefault(item => item.Id == note.Id);
+        if (existing is not null)
+            Notes.Remove(existing);
+        Notes.Insert(0, note);
+
+        _workspace.Open(note.Id);
+        var openExisting = WorkspaceNotes.FirstOrDefault(item => item.Id == note.Id);
+        if (openExisting is not null)
+            WorkspaceNotes.Remove(openExisting);
+        WorkspaceNotes.Add(note);
+
+        while (WorkspaceNotes.Count > WorkspaceService.MaximumOpenNotes)
+            WorkspaceNotes.RemoveAt(0);
+
+        await _notes.MarkOpenedAsync(note.Id, DateTimeOffset.UtcNow, CancellationToken.None);
+        Editor.Load(note);
+        CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
+        StatusText = "New note created — start typing.";
+    }
 
     private async Task SelectFolderAsync(Guid folderId)
     {
