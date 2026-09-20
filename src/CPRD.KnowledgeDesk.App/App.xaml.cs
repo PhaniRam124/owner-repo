@@ -41,6 +41,8 @@ public partial class App : Application
             collection.AddSingleton<IBackupService, BackupService>();
             collection.AddSingleton<IRecoveryService, RecoveryService>();
             collection.AddSingleton<IAppLogService, AppLogService>();
+            collection.AddSingleton<IExportImportService, ExportImportService>();
+            collection.AddSingleton<IDuplicateDetectionService, DuplicateDetectionService>();
 
             collection.AddSingleton<IDelayScheduler, SystemDelayScheduler>();
             collection.AddSingleton(sp => new AutoSaveCoordinator(
