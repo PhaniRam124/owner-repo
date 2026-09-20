@@ -58,6 +58,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
         Dashboard = new DashboardViewModel(_dashboard);
         Editor = editor;
+        Trash = new TrashViewModel(_notes);
         SelectFolderCommand = new AsyncRelayCommand<Guid>(SelectFolderAsync);
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
@@ -73,6 +74,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public DashboardViewModel Dashboard { get; }
     public EditorViewModel Editor { get; }
+    public TrashViewModel Trash { get; }
 
     public AsyncRelayCommand<Guid> SelectFolderCommand { get; }
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
@@ -106,6 +108,7 @@ public sealed class MainWindowViewModel : ObservableObject
             Folders.Add(folder);
 
         await Dashboard.RefreshAsync();
+        await Trash.RefreshAsync();
         StatusText = "Ready";
     }
 
