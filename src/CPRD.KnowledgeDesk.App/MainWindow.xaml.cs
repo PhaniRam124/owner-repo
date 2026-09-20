@@ -31,7 +31,27 @@ public partial class MainWindow : Window
             viewModel.CloseActiveWorkspaceCommand,
             viewModel.Editor.ToggleFavoriteCommand);
 
+        SourceInitialized += (_, _) => ApplyInitialBounds();
         Closing += OnClosing;
+    }
+
+    private void ApplyInitialBounds()
+    {
+        var area = SystemParameters.WorkArea;
+        var bounds = WindowLayoutPolicy.Fit(
+            preferredWidth: 1440,
+            preferredHeight: 880,
+            minimumWidth: MinWidth,
+            minimumHeight: MinHeight,
+            workLeft: area.Left,
+            workTop: area.Top,
+            workWidth: area.Width,
+            workHeight: area.Height);
+
+        Width = bounds.Width;
+        Height = bounds.Height;
+        Left = bounds.Left;
+        Top = bounds.Top;
     }
 
     private void FocusSearch()
