@@ -241,6 +241,9 @@
                         <TabItem Header="Dashboard">
                             <views:DashboardView DataContext="{Binding Dashboard}"/>
                         </TabItem>
+                        <TabItem Header="Trash">
+                            <views:TrashView DataContext="{Binding Trash}"/>
+                        </TabItem>
                     </TabControl>
                 </Grid>
             </Border>
