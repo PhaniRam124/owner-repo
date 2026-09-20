@@ -52,7 +52,7 @@ public sealed class AutoSaveCoordinatorTests
 
         public Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
         {
-            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var tcs = new TaskCompletionSource();
             var pending = new PendingDelay(delay, tcs);
             _pending.Add(pending);
             cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
