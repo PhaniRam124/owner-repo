@@ -28,6 +28,39 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(paymentsId, notes.LastRequestedFolderId);
     }
 
+    [Fact]
+    public async Task Navigation_commands_query_all_favorites_pinned_and_recent()
+    {
+        var folderId = Guid.NewGuid();
+        var folders = new FakeFolderService(new Folder(
+            folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+        var search = new FakeSearchService();
+
+        var vm = new MainWindowViewModel(
+            folders,
+            new FakeNoteService(),
+            new FakeTagService(),
+            search,
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+
+        await vm.ShowAllNotesCommand.ExecuteAsync(null);
+        Assert.NotNull(search.LastQuery);
+        Assert.False(search.LastQuery!.FavoritesOnly);
+        Assert.False(search.LastQuery.PinnedOnly);
+
+        await vm.ShowFavoritesCommand.ExecuteAsync(null);
+        Assert.True(search.LastQuery!.FavoritesOnly);
+
+        await vm.ShowPinnedCommand.ExecuteAsync(null);
+        Assert.True(search.LastQuery!.PinnedOnly);
+
+        await vm.ShowRecentCommand.ExecuteAsync(null);
+        Assert.False(search.LastQuery!.FavoritesOnly);
+        Assert.False(search.LastQuery.PinnedOnly);
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         public Guid? LastRequestedFolderId { get; private set; }
@@ -77,8 +110,13 @@ public sealed class MainWindowViewModelTests
 
     private sealed class FakeSearchService : ISearchService
     {
-        public Task<IReadOnlyList<SearchHit>> SearchAsync(SearchQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<SearchHit>>(Array.Empty<SearchHit>());
+        public SearchQuery? LastQuery { get; private set; }
+
+        public Task<IReadOnlyList<SearchHit>> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            LastQuery = query;
+            return Task.FromResult<IReadOnlyList<SearchHit>>(Array.Empty<SearchHit>());
+        }
     }
 
     private sealed class FakeDashboardService : IDashboardService
