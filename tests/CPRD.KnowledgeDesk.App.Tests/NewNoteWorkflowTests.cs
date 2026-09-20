@@ -63,6 +63,47 @@ public sealed class NewNoteWorkflowTests
         Assert.Equal(2, vm.WorkspaceNotes.Count);
     }
 
+    [Fact]
+    public async Task New_note_failure_is_reported_without_crashing_command()
+    {
+        var generalId = Guid.NewGuid();
+        var folders = new FakeFolderService(
+            new Folder(generalId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
+
+        var vm = new MainWindowViewModel(
+            folders,
+            new ThrowingNoteService(),
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService(),
+            new WorkspaceService(),
+            new EditorViewModel(new ThrowingNoteService()));
+
+        await vm.InitializeAsync();
+        await vm.CreateNewNoteCommand.ExecuteAsync(null);
+
+        Assert.Contains("Unable to create note", vm.StatusText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class ThrowingNoteService : INoteService
+    {
+        public Task<Note> CreateAsync(NewNoteRequest request, CancellationToken cancellationToken) =>
+            throw new IOException("simulated write failure");
+        public Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Note?>(null);
+        public Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Note>>(Array.Empty<Note>());
+        public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task ArchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UnarchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task RestoreFromTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task DeletePermanentlyAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<int> PurgeTrashOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) => Task.FromResult(0);
+        public Task<IReadOnlyList<Note>> ListTrashAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Note>>(Array.Empty<Note>());
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         private readonly List<Note> _notes = new();
