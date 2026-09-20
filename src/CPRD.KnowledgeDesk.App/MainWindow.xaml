@@ -112,10 +112,10 @@
                                    FontSize="10" FontWeight="SemiBold" Margin="6,5,0,5"/>
                         <Button Style="{StaticResource NavButton}" Content="⌂  Dashboard"
                                 Command="{Binding RefreshDashboardCommand}"/>
-                        <Button Style="{StaticResource NavButton}" Content="⌕  All Notes"/>
-                        <Button Style="{StaticResource NavButton}" Content="★  Favorites"/>
-                        <Button Style="{StaticResource NavButton}" Content="●  Pinned"/>
-                        <Button Style="{StaticResource NavButton}" Content="◷  Recent"/>
+                        <Button Style="{StaticResource NavButton}" Content="⌕  All Notes" Command="{Binding ShowAllNotesCommand}"/>
+                        <Button Style="{StaticResource NavButton}" Content="★  Favorites" Command="{Binding ShowFavoritesCommand}"/>
+                        <Button Style="{StaticResource NavButton}" Content="●  Pinned" Command="{Binding ShowPinnedCommand}"/>
+                        <Button Style="{StaticResource NavButton}" Content="◷  Recent" Command="{Binding ShowRecentCommand}"/>
                         <Separator Margin="0,8"/>
                         <TextBlock Text="FOLDERS" Foreground="{StaticResource MutedBrush}"
                                    FontSize="10" FontWeight="SemiBold" Margin="6,5,0,5"/>
