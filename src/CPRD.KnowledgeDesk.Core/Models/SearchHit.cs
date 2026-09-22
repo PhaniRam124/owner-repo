@@ -22,4 +22,5 @@ public sealed record SearchHit(
     bool IsFavorite,
     bool IsPinned,
     DateTimeOffset ModifiedAtUtc,
-    double Rank);
+    double Rank,
+    bool IsArchived = false);
