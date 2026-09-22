@@ -55,12 +55,13 @@
                         <TextBlock Text="Pinned" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
                 </Button>
-                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowArchivedCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
                         <TextBlock Text="{Binding ArchivedCount}" FontSize="25" FontWeight="Bold"/>
                         <TextBlock Text="Archived" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
-                </Border>
+                </Button>
                 <Button Width="170" Height="88" Margin="4"
                         Command="{Binding DataContext.ShowTrashCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
