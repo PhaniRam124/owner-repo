@@ -11,4 +11,5 @@ public interface IFolderService
     Task MoveAsync(Guid folderId, Guid? newParentId, CancellationToken cancellationToken);
     Task ArchiveAsync(Guid folderId, CancellationToken cancellationToken);
     Task RestoreAsync(Guid folderId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid folderId, Guid destinationFolderId, CancellationToken cancellationToken);
 }
