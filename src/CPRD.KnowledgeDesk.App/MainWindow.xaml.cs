@@ -92,7 +92,16 @@ public partial class MainWindow : Window
         window.Owner = this;
         var saved = window.ShowDialog() == true;
 
-        if (saved && _viewModel.SelectedFolderId is Guid folderId)
+        if (!saved)
+            return;
+
+        if (window.OpenAfterSave && window.SavedNoteId is Guid noteId)
+        {
+            _viewModel.SelectNoteCommand.Execute(noteId);
+            return;
+        }
+
+        if (_viewModel.SelectedFolderId is Guid folderId)
             _viewModel.SelectFolderCommand.Execute(folderId);
     }
 
