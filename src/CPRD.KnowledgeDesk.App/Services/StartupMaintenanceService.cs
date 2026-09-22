@@ -30,19 +30,23 @@ public sealed class StartupMaintenanceService
     }
 
     public async Task<StartupMaintenanceResult> RunAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool recoverPendingDrafts = true)
     {
         var recovered = 0;
         var backupCreated = false;
 
-        try
+        if (recoverPendingDrafts)
         {
-            recovered = await _recovery.RecoverPendingAsync(cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            if (_log is not null)
-                await _log.LogAsync(AppLogLevel.Error, "Crash recovery failed during startup.", ex, cancellationToken);
+            try
+            {
+                recovered = await _recovery.RecoverPendingAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                if (_log is not null)
+                    await _log.LogAsync(AppLogLevel.Error, "Crash recovery failed during startup.", ex, cancellationToken);
+            }
         }
 
         try
