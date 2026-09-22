@@ -46,6 +46,24 @@ public sealed class EditorPersistenceTests
             notes.LastUpdate!.Tags.OrderBy(value => value, StringComparer.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task Changing_folder_is_persisted_with_note_save()
+    {
+        var notes = new FakeNoteService();
+        using var vm = new EditorViewModel(notes);
+        var note = CreateNote("Move Me", "body", string.Empty);
+        var destination = Guid.NewGuid();
+
+        vm.Load(note);
+        vm.LoadTags(Array.Empty<string>());
+        vm.SelectedFolderId = destination;
+
+        await vm.FlushAsync(true, CancellationToken.None);
+
+        Assert.NotNull(notes.LastUpdate);
+        Assert.Equal(destination, notes.LastUpdate!.FolderId);
+    }
+
     private static Note CreateNote(string title, string plainText, string package)
     {
         var now = DateTimeOffset.UtcNow;
