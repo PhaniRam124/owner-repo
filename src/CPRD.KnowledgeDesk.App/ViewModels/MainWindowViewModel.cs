@@ -72,6 +72,7 @@ public sealed class MainWindowViewModel : ObservableObject
         ShowFavoritesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Favorites", true, false));
         ShowPinnedCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Pinned", false, true));
         ShowRecentCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Recent", false, false));
+        ShowArchivedCommand = new AsyncRelayCommand(LoadArchivedAsync);
         CreateNewNoteCommand = new AsyncRelayCommand(CreateNewNoteAsync);
         CloseWorkspaceNoteCommand = new AsyncRelayCommand<Guid>(CloseWorkspaceNoteAsync);
         CloseActiveWorkspaceCommand = new AsyncRelayCommand(CloseActiveWorkspaceAsync, () => Editor.CurrentNote is not null);
@@ -98,6 +99,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public IAsyncRelayCommand ShowFavoritesCommand { get; }
     public IAsyncRelayCommand ShowPinnedCommand { get; }
     public IAsyncRelayCommand ShowRecentCommand { get; }
+    public IAsyncRelayCommand ShowArchivedCommand { get; }
     public IAsyncRelayCommand CreateNewNoteCommand { get; }
     public AsyncRelayCommand<Guid> CloseWorkspaceNoteCommand { get; }
     public IAsyncRelayCommand CloseActiveWorkspaceCommand { get; }
@@ -311,6 +313,38 @@ public sealed class MainWindowViewModel : ObservableObject
 
         EmptyStateText = SearchResults.Count == 0 ? $"No notes found in {label}." : string.Empty;
         StatusText = $"{label}: {SearchResults.Count} note(s)";
+    }
+
+    private async Task LoadArchivedAsync()
+    {
+        await Editor.FlushAsync(true, CancellationToken.None);
+
+        SelectedWorkspaceIndex = 0;
+        SelectedFolderId = null;
+        Notes.Clear();
+        SearchResults.Clear();
+
+        var query = new SearchQuery(
+            string.Empty,
+            null,
+            Array.Empty<Guid>(),
+            null,
+            null,
+            null,
+            true,
+            false,
+            false,
+            false,
+            200);
+
+        foreach (var hit in await _search.SearchAsync(query, CancellationToken.None))
+        {
+            if (hit.IsArchived)
+                SearchResults.Add(hit);
+        }
+
+        EmptyStateText = SearchResults.Count == 0 ? "Archive is empty." : string.Empty;
+        StatusText = $"Archive: {SearchResults.Count} note(s)";
     }
 
     private async Task SearchAsync()
