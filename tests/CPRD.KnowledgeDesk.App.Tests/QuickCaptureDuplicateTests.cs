@@ -80,6 +80,8 @@ public sealed class QuickCaptureDuplicateTests
 
         public Task RestoreAsync(Guid folderId, CancellationToken cancellationToken) =>
             Task.CompletedTask;
+        public Task DeleteAsync(Guid folderId, Guid destinationFolderId, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 
     private sealed class FakeNoteService : INoteService
