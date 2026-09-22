@@ -1,0 +1,278 @@
+<UserControl x:Class="CPRD.KnowledgeDesk.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="16">
+            <DockPanel Margin="2,0,2,12">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="Dashboard" FontSize="25" FontWeight="SemiBold"/>
+                    <TextBlock Text="Live overview from the local Knowledge Desk database"
+                               Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                </StackPanel>
+                <Button DockPanel.Dock="Right"
+                        Content="Refresh"
+                        Command="{Binding DataContext.RefreshDashboardCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Padding="14,6"/>
+            </DockPanel>
+
+            <WrapPanel>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowAllNotesCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TotalNotes}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Total Notes" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowCreatedTodayCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CreatedToday}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Created Today" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowCreatedThisWeekCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CreatedThisWeek}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Created This Week" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowModifiedTodayCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding UpdatedToday}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Modified Today" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowFavoritesCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding FavoriteCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Favorites" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowPinnedCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PinnedCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Pinned" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowArchivedCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ArchivedCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Archived" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowTrashCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TrashCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Trash" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding FolderCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Folders" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Border>
+                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TagCount}" FontSize="25" FontWeight="Bold"/>
+                        <TextBlock Text="Tags" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Border Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                        <StackPanel>
+                            <TextBlock Text="Recent Notes" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,7"/>
+                            <ItemsControl ItemsSource="{Binding Recent}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource NavButton}"
+                                                Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding NoteId}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding ModifiedAtUtc, StringFormat={}{0:g}}"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           FontSize="10"
+                                                           Margin="8,0,0,0"/>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                        <StackPanel>
+                            <TextBlock Text="Recently Modified" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,7"/>
+                            <ItemsControl ItemsSource="{Binding RecentlyModified}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource NavButton}"
+                                                Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding NoteId}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding ModifiedAtUtc, StringFormat=Modified {0:g}}"
+                                                           Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <Border Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                        <StackPanel>
+                            <TextBlock Text="Pinned Notes" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,7"/>
+                            <ItemsControl ItemsSource="{Binding Pinned}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource NavButton}"
+                                                Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding NoteId}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                        <StackPanel>
+                            <TextBlock Text="Favorite Notes" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,7"/>
+                            <ItemsControl ItemsSource="{Binding Favorites}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource NavButton}"
+                                                Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding NoteId}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding FolderPath}" Foreground="{StaticResource MutedBrush}" FontSize="10"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                        <StackPanel>
+                            <TextBlock Text="Data Protection" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="{Binding BackupStatus}" Foreground="{StaticResource TealBrush}" Margin="0,5,0,0"/>
+                            <TextBlock Text="Use File → Backup Now for an immediate verified database snapshot."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="10"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                    <StackPanel>
+                        <TextBlock Text="Notes by Folder"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Margin="0,0,0,7"/>
+                        <ItemsControl ItemsSource="{Binding FolderSummary}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource NavButton}"
+                                            Command="{Binding DataContext.SelectFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding FolderId}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding FolderPath}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding NoteCount}"
+                                                       FontSize="16"
+                                                       FontWeight="Bold"
+                                                       Margin="10,0,0,0"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="2,0,2,10">
+                    <StackPanel>
+                        <TextBlock Text="Notes Created — Last 7 Days"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Margin="0,0,0,7"/>
+                        <ItemsControl ItemsSource="{Binding CreatedOverTime}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding DayUtc, StringFormat={}{0:ddd, dd MMM}}"
+                                                   Foreground="{StaticResource MutedBrush}"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding NoteCount}"
+                                                   FontWeight="SemiBold"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

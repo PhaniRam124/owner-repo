@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DrawingImage x:Key="AppIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#754B68" Geometry="M4,4 H60 V60 H4 Z"/>
+                <GeometryDrawing Brush="#F8F5EF" Geometry="M11,9 H53 V55 H11 Z"/>
+                <GeometryDrawing Brush="#7A6FA5" Geometry="M17,15 H47 V49 H17 Z"/>
+                <GeometryDrawing Brush="#FFFFFF"
+                                 Geometry="M23,21 H28 V31 L37,21 H43 L33,32 L44,44 H38 L28,35 V44 H23 Z"/>
+                <GeometryDrawing Brush="#C27A47">
+                    <GeometryDrawing.Geometry>
+                        <EllipseGeometry Center="42,43" RadiusX="3.5" RadiusY="3.5"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+</ResourceDictionary>

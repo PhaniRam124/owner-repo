@@ -1,0 +1,99 @@
+<UserControl x:Class="CPRD.KnowledgeDesk.App.Views.EditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             DataContextChanged="OnDataContextChanged">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Padding="4"
+                     Margin="0,0,0,4"/>
+            <Grid Margin="4,0,4,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Folder"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding DataContext.Folders, RelativeSource={RelativeSource AncestorType=Window}}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding SelectedFolderId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Move note to another folder"
+                          VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="3"
+                           Text="Tags"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <TextBox Grid.Column="4"
+                         Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Comma-separated tags"
+                         VerticalContentAlignment="Center"/>
+            </Grid>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="{StaticResource SurfaceAltBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="8" Padding="5" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="B" FontWeight="Bold" ToolTip="Bold" Click="Bold_Click"/>
+                <Button Content="I" FontStyle="Italic" ToolTip="Italic" Click="Italic_Click"/>
+                <Button ToolTip="Underline" Click="Underline_Click">
+                    <TextBlock Text="U" TextDecorations="Underline"/>
+                </Button>
+                <Separator Margin="5,0"/>
+                <Button Content="• List" ToolTip="Bulleted list" Click="Bullets_Click"/>
+                <Button Content="1. List" ToolTip="Numbered list" Click="Numbering_Click"/>
+                <Separator Margin="5,0"/>
+                <Button Content="Save" Command="{Binding SaveNowCommand}"/>
+                <Separator Margin="5,0"/>
+                <Button Content="Archive"
+                        ToolTip="Archive current note"
+                        Command="{Binding DataContext.ArchiveCurrentNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <Button Content="Trash"
+                        ToolTip="Move current note to Trash"
+                        Command="{Binding DataContext.MoveCurrentNoteToTrashCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="8">
+            <RichTextBox x:Name="EditorBox"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         FontSize="14"
+                         AcceptsTab="True"
+                         VerticalScrollBarVisibility="Auto"
+                         SpellCheck.IsEnabled="True"
+                         TextChanged="EditorBox_TextChanged"
+                         LostKeyboardFocus="EditorBox_LostKeyboardFocus"/>
+        </Border>
+
+        <DockPanel Grid.Row="3" Margin="2,8,2,0">
+            <CheckBox Content="Favorite" IsChecked="{Binding IsFavorite}" Margin="0,0,14,0"/>
+            <CheckBox Content="Pinned" IsChecked="{Binding IsPinned}" Margin="0,0,14,0"/>
+            <TextBlock Text="{Binding SaveStatus}" Foreground="{StaticResource TealBrush}"/>
+        </DockPanel>
+    </Grid>
+</UserControl>
