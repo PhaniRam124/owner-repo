@@ -4,6 +4,7 @@ using CPRD.KnowledgeDesk.Core.Services;
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using CPRD.KnowledgeDesk.App.Services;
 using CPRD.KnowledgeDesk.App.ViewModels;
 using CPRD.KnowledgeDesk.App.Views;
@@ -62,6 +63,25 @@ public partial class MainWindow : Window
     {
         GlobalSearchBox.Focus();
         GlobalSearchBox.SelectAll();
+    }
+
+    private async void GlobalSearchBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        await _viewModel.SearchCommand.ExecuteAsync(null);
+    }
+
+    private async void RecentSearches_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ComboBox combo ||
+            combo.SelectedItem is not string query ||
+            string.IsNullOrWhiteSpace(query))
+            return;
+
+        _viewModel.GlobalSearchText = query;
+        combo.SelectedItem = null;
+        await _viewModel.SearchCommand.ExecuteAsync(null);
     }
 
     private void ShowQuickCapture()
