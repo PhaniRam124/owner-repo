@@ -18,6 +18,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private Guid? _selectedFolderId;
     private string _globalSearchText = string.Empty;
     private string _statusText = "Ready";
+    private int _selectedWorkspaceIndex;
 
     public MainWindowViewModel(
         IFolderService folders,
@@ -63,6 +64,8 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
         RefreshDashboardCommand = new AsyncRelayCommand(RefreshDashboardAsync);
+        ShowDashboardCommand = new AsyncRelayCommand(ShowDashboardAsync);
+        ShowTrashCommand = new AsyncRelayCommand(ShowTrashAsync);
         ShowAllNotesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("All Notes", false, false));
         ShowFavoritesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Favorites", true, false));
         ShowPinnedCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Pinned", false, true));
@@ -85,6 +88,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
     public IAsyncRelayCommand SearchCommand { get; }
     public IAsyncRelayCommand RefreshDashboardCommand { get; }
+    public IAsyncRelayCommand ShowDashboardCommand { get; }
+    public IAsyncRelayCommand ShowTrashCommand { get; }
     public IAsyncRelayCommand ShowAllNotesCommand { get; }
     public IAsyncRelayCommand ShowFavoritesCommand { get; }
     public IAsyncRelayCommand ShowPinnedCommand { get; }
@@ -109,6 +114,12 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _statusText;
         private set => SetProperty(ref _statusText, value);
+    }
+
+    public int SelectedWorkspaceIndex
+    {
+        get => _selectedWorkspaceIndex;
+        set => SetProperty(ref _selectedWorkspaceIndex, Math.Clamp(value, 0, 2));
     }
 
     public async Task InitializeAsync()
@@ -165,6 +176,7 @@ public sealed class MainWindowViewModel : ObservableObject
                     Array.Empty<string>()),
                 CancellationToken.None);
 
+            SelectedWorkspaceIndex = 0;
             SelectedFolderId = folderId.Value;
             SearchResults.Clear();
 
@@ -197,6 +209,7 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         await Editor.FlushAsync(true, CancellationToken.None);
 
+        SelectedWorkspaceIndex = 0;
         SelectedFolderId = folderId;
         Notes.Clear();
         foreach (var note in await _notes.ListByFolderAsync(folderId, CancellationToken.None))
@@ -210,6 +223,7 @@ public sealed class MainWindowViewModel : ObservableObject
         if (Editor.CurrentNote?.Id != noteId)
             await Editor.FlushAsync(true, CancellationToken.None);
 
+        SelectedWorkspaceIndex = 0;
         var note = await _notes.GetAsync(noteId, CancellationToken.None);
         if (note is null) return;
 
@@ -263,6 +277,7 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         await Editor.FlushAsync(true, CancellationToken.None);
 
+        SelectedWorkspaceIndex = 0;
         SelectedFolderId = null;
         Notes.Clear();
         SearchResults.Clear();
@@ -320,5 +335,19 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         await Dashboard.RefreshAsync();
         StatusText = "Dashboard refreshed";
+    }
+
+    private async Task ShowDashboardAsync()
+    {
+        SelectedWorkspaceIndex = 1;
+        await Dashboard.RefreshAsync();
+        StatusText = "Dashboard refreshed";
+    }
+
+    private async Task ShowTrashAsync()
+    {
+        SelectedWorkspaceIndex = 2;
+        await Trash.RefreshAsync();
+        StatusText = Trash.Status;
     }
 }
