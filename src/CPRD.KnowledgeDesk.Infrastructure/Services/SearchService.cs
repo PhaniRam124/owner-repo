@@ -133,7 +133,8 @@ public sealed class SearchService : ISearchService
                 reader.GetInt64(5) != 0,
                 reader.GetInt64(6) != 0,
                 DateTimeOffset.Parse(reader.GetString(7)),
-                reader.GetDouble(8)));
+                reader.GetDouble(8),
+                reader.GetInt64(9) != 0));
         }
         return result;
     }
