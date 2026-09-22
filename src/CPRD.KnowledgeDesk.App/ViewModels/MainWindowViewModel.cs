@@ -306,6 +306,7 @@ public sealed class MainWindowViewModel : ObservableObject
             WorkspaceNotes.RemoveAt(0);
 
         Editor.Load(note);
+        Editor.LoadTags(await _notes.GetTagsAsync(note.Id, CancellationToken.None));
         CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
         StatusText = note.Title;
     }
