@@ -20,6 +20,8 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private string _contentPackage = string.Empty;
     private string _plainText = string.Empty;
     private string _structuredJson = "{}";
+    private string _tagsText = string.Empty;
+    private string _savedTagsFingerprint = string.Empty;
     private bool _isFavorite;
     private bool _isPinned;
     private string _saveState = "Saved";
@@ -126,6 +128,12 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         set { if (SetProperty(ref _structuredJson, value)) MarkDirty(); }
     }
 
+    public string TagsText
+    {
+        get => _tagsText;
+        set { if (SetProperty(ref _tagsText, value)) MarkDirty(); }
+    }
+
     public bool IsFavorite
     {
         get => _isFavorite;
@@ -166,11 +174,28 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             ContentPackage = note.ContentPackage;
             PlainText = note.PlainText;
             StructuredJson = note.StructuredJson;
+            TagsText = string.Empty;
+            _savedTagsFingerprint = string.Empty;
             IsFavorite = note.IsFavorite;
             IsPinned = note.IsPinned;
             SaveState = "Saved";
             SaveStatus = "Saved";
             DocumentVersion++;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    public void LoadTags(IEnumerable<string> tags)
+    {
+        _loading = true;
+        try
+        {
+            var normalized = NormalizeTags(tags);
+            TagsText = string.Join(", ", normalized);
+            _savedTagsFingerprint = string.Join("|", normalized.Select(value => value.ToUpperInvariant()));
         }
         finally
         {
@@ -188,6 +213,8 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             ContentPackage = string.Empty;
             PlainText = string.Empty;
             StructuredJson = "{}";
+            TagsText = string.Empty;
+            _savedTagsFingerprint = string.Empty;
             IsFavorite = false;
             IsPinned = false;
             SaveState = "Saved";
@@ -271,7 +298,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
                 IsFavorite,
                 IsPinned,
                 StructuredJson,
-                Array.Empty<string>()), cancellationToken);
+                ParseTags()), cancellationToken);
 
             CurrentNote = current with
             {
@@ -283,6 +310,8 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
                 StructuredJson = string.IsNullOrWhiteSpace(StructuredJson) ? "{}" : StructuredJson,
                 ModifiedAtUtc = now
             };
+
+            _savedTagsFingerprint = CurrentTagsFingerprint();
 
             if (_recovery is not null)
                 await _recovery.DeleteDraftAsync(current.Id, cancellationToken);
@@ -310,7 +339,26 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         !string.Equals(note.PlainText, PlainText, StringComparison.Ordinal) ||
         note.IsFavorite != IsFavorite ||
         note.IsPinned != IsPinned ||
-        !string.Equals(note.StructuredJson, string.IsNullOrWhiteSpace(StructuredJson) ? "{}" : StructuredJson, StringComparison.Ordinal);
+        !string.Equals(note.StructuredJson, string.IsNullOrWhiteSpace(StructuredJson) ? "{}" : StructuredJson, StringComparison.Ordinal) ||
+        !string.Equals(_savedTagsFingerprint, CurrentTagsFingerprint(), StringComparison.Ordinal);
+
+    private string[] ParseTags() => NormalizeTags(
+        TagsText.Split(
+            ',',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+
+    private string CurrentTagsFingerprint() =>
+        string.Join("|", ParseTags().Select(value => value.ToUpperInvariant()));
+
+    private static string[] NormalizeTags(IEnumerable<string> tags) =>
+        tags
+            .Select(value => string.Join(' ', (value ?? string.Empty)
+                .Trim()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)))
+            .Where(value => value.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
     public void Dispose()
     {
