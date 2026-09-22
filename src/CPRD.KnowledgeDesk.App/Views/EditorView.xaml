@@ -32,6 +32,13 @@
                 <Button Content="1. List" ToolTip="Numbered list" Click="Numbering_Click"/>
                 <Separator Margin="5,0"/>
                 <Button Content="Save" Command="{Binding SaveNowCommand}"/>
+                <Separator Margin="5,0"/>
+                <Button Content="Archive"
+                        ToolTip="Archive current note"
+                        Command="{Binding DataContext.ArchiveCurrentNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <Button Content="Trash"
+                        ToolTip="Move current note to Trash"
+                        Command="{Binding DataContext.MoveCurrentNoteToTrashCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
             </StackPanel>
         </Border>
 
