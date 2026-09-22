@@ -131,13 +131,63 @@ public sealed class MainWindowViewModelTests
         Assert.Contains("Archive", vm.StatusText, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Archive_and_trash_current_note_use_persistent_note_service()
+    {
+        var folderId = Guid.NewGuid();
+        var noteId = Guid.NewGuid();
+        var notes = new FakeNoteService
+        {
+            NoteToReturn = new Note(
+                noteId,
+                "Current",
+                string.Empty,
+                "body",
+                folderId,
+                "Standard Note",
+                false,
+                false,
+                false,
+                DateTimeOffset.UtcNow,
+                DateTimeOffset.UtcNow,
+                null,
+                null,
+                null,
+                null,
+                "{}")
+        };
+
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)),
+            notes,
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+        await vm.SelectNoteCommand.ExecuteAsync(noteId);
+        await vm.ArchiveCurrentNoteCommand.ExecuteAsync(null);
+
+        Assert.Equal(noteId, notes.LastArchivedId);
+
+        notes.NoteToReturn = notes.NoteToReturn with { IsArchived = false };
+        await vm.SelectNoteCommand.ExecuteAsync(noteId);
+        await vm.MoveCurrentNoteToTrashCommand.ExecuteAsync(null);
+
+        Assert.Equal(noteId, notes.LastTrashedId);
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         public Guid? LastRequestedFolderId { get; private set; }
+        public Guid? LastArchivedId { get; private set; }
+        public Guid? LastTrashedId { get; private set; }
+        public Note? NoteToReturn { get; set; }
         public Task<Note> CreateAsync(NewNoteRequest request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
         public Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<Note?>(null);
+            Task.FromResult(NoteToReturn?.Id == id ? NoteToReturn : null);
         public Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken) =>
             Task.CompletedTask;
         public Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken)
@@ -147,9 +197,17 @@ public sealed class MainWindowViewModelTests
         }
         public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) =>
             Task.CompletedTask;
-        public Task ArchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task ArchiveAsync(Guid id, CancellationToken cancellationToken)
+        {
+            LastArchivedId = id;
+            return Task.CompletedTask;
+        }
         public Task UnarchiveAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task MoveToTrashAsync(Guid id, CancellationToken cancellationToken)
+        {
+            LastTrashedId = id;
+            return Task.CompletedTask;
+        }
         public Task RestoreFromTrashAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeletePermanentlyAsync(Guid id, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<int> PurgeTrashOlderThanAsync(DateTimeOffset cutoffUtc, CancellationToken cancellationToken) => Task.FromResult(0);
