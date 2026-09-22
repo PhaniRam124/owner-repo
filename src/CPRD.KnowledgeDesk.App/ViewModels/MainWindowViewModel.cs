@@ -18,6 +18,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private Guid? _selectedFolderId;
     private string _globalSearchText = string.Empty;
     private string _statusText = "Ready";
+    private string _emptyStateText = string.Empty;
     private int _selectedWorkspaceIndex;
 
     public MainWindowViewModel(
@@ -63,6 +64,7 @@ public sealed class MainWindowViewModel : ObservableObject
         SelectFolderCommand = new AsyncRelayCommand<Guid>(SelectFolderAsync);
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
         SearchCommand = new AsyncRelayCommand(SearchAsync);
+        ClearSearchCommand = new AsyncRelayCommand(ClearSearchAsync);
         RefreshDashboardCommand = new AsyncRelayCommand(RefreshDashboardAsync);
         ShowDashboardCommand = new AsyncRelayCommand(ShowDashboardAsync);
         ShowTrashCommand = new AsyncRelayCommand(ShowTrashAsync);
@@ -79,6 +81,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<Note> Notes { get; } = new();
     public ObservableCollection<SearchHit> SearchResults { get; } = new();
     public ObservableCollection<Note> WorkspaceNotes { get; } = new();
+    public ObservableCollection<string> RecentSearches { get; } = new();
 
     public DashboardViewModel Dashboard { get; }
     public EditorViewModel Editor { get; }
@@ -87,6 +90,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand<Guid> SelectFolderCommand { get; }
     public AsyncRelayCommand<Guid> SelectNoteCommand { get; }
     public IAsyncRelayCommand SearchCommand { get; }
+    public IAsyncRelayCommand ClearSearchCommand { get; }
     public IAsyncRelayCommand RefreshDashboardCommand { get; }
     public IAsyncRelayCommand ShowDashboardCommand { get; }
     public IAsyncRelayCommand ShowTrashCommand { get; }
@@ -114,6 +118,12 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _statusText;
         private set => SetProperty(ref _statusText, value);
+    }
+
+    public string EmptyStateText
+    {
+        get => _emptyStateText;
+        private set => SetProperty(ref _emptyStateText, value);
     }
 
     public int SelectedWorkspaceIndex
@@ -215,6 +225,7 @@ public sealed class MainWindowViewModel : ObservableObject
         foreach (var note in await _notes.ListByFolderAsync(folderId, CancellationToken.None))
             Notes.Add(note);
         SearchResults.Clear();
+        EmptyStateText = string.Empty;
         StatusText = $"{Notes.Count} note(s)";
     }
 
@@ -298,6 +309,7 @@ public sealed class MainWindowViewModel : ObservableObject
         foreach (var hit in await _search.SearchAsync(query, CancellationToken.None))
             SearchResults.Add(hit);
 
+        EmptyStateText = SearchResults.Count == 0 ? $"No notes found in {label}." : string.Empty;
         StatusText = $"{label}: {SearchResults.Count} note(s)";
     }
 
@@ -308,9 +320,18 @@ public sealed class MainWindowViewModel : ObservableObject
         var text = GlobalSearchText.Trim();
         if (text.Length == 0)
         {
+            EmptyStateText = string.Empty;
             StatusText = "Search cleared";
             return;
         }
+
+        var previous = RecentSearches.FirstOrDefault(item =>
+            item.Equals(text, StringComparison.OrdinalIgnoreCase));
+        if (previous is not null)
+            RecentSearches.Remove(previous);
+        RecentSearches.Insert(0, text);
+        while (RecentSearches.Count > 8)
+            RecentSearches.RemoveAt(RecentSearches.Count - 1);
 
         var query = new SearchQuery(
             text,
@@ -328,7 +349,22 @@ public sealed class MainWindowViewModel : ObservableObject
         foreach (var hit in await _search.SearchAsync(query, CancellationToken.None))
             SearchResults.Add(hit);
 
+        EmptyStateText = SearchResults.Count == 0
+            ? "No notes found matching your search."
+            : string.Empty;
         StatusText = $"{SearchResults.Count} result(s)";
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        GlobalSearchText = string.Empty;
+        SearchResults.Clear();
+        EmptyStateText = string.Empty;
+
+        if (SelectedFolderId is Guid folderId)
+            await SelectFolderAsync(folderId);
+        else
+            StatusText = "Search cleared";
     }
 
     private async Task RefreshDashboardAsync()
