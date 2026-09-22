@@ -66,6 +66,38 @@ public sealed class SearchDashboardTests
         Assert.Single(snapshot.Pinned);
     }
 
+    [Fact]
+    public async Task Dashboard_snapshot_reports_operational_counts()
+    {
+        using var env = await TestEnvironment.CreateAsync();
+        var officeId = await GetFolderIdAsync(env.Db, "Office");
+        var notes = new NoteService(new NoteRepository(env.Db), new SearchRepository(env.Db), env.Db);
+
+        var active = await notes.CreateAsync(new NewNoteRequest(
+            "Active", "<FlowDocument />", "active body", officeId, "Standard Note", "{}", new[] { "ops" }), default);
+        await notes.UpdateAsync(new UpdateNoteRequest(
+            active.Id, active.Title, active.ContentPackage, active.PlainText, officeId, active.NoteType, true, true, "{}", new[] { "ops" }), default);
+
+        var archived = await notes.CreateAsync(new NewNoteRequest(
+            "Archived", "<FlowDocument />", "archive body", officeId, "Standard Note", "{}", Array.Empty<string>()), default);
+        await notes.ArchiveAsync(archived.Id, default);
+
+        var trashed = await notes.CreateAsync(new NewNoteRequest(
+            "Trash", "<FlowDocument />", "trash body", officeId, "Standard Note", "{}", Array.Empty<string>()), default);
+        await notes.MoveToTrashAsync(trashed.Id, default);
+
+        var dashboard = new DashboardService(env.Db);
+        var snapshot = await dashboard.GetSnapshotAsync(default);
+
+        Assert.Equal(1, snapshot.TotalNotes);
+        Assert.Equal(1, snapshot.PinnedCount);
+        Assert.Equal(1, snapshot.ArchivedCount);
+        Assert.Equal(1, snapshot.TrashCount);
+        Assert.True(snapshot.CreatedToday >= 1);
+        Assert.True(snapshot.CreatedThisWeek >= 1);
+        Assert.True(snapshot.TagCount >= 1);
+    }
+
     private static async Task<Guid> GetFolderIdAsync(KnowledgeDb db, string name)
     {
         await using var connection = db.OpenConnection();
