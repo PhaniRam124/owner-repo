@@ -113,6 +113,31 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task Dashboard_time_kpis_open_corresponding_filtered_notes()
+    {
+        var folderId = Guid.NewGuid();
+        var search = new FakeSearchService();
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)),
+            new FakeNoteService(),
+            new FakeTagService(),
+            search,
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+
+        await vm.ShowCreatedTodayCommand.ExecuteAsync(null);
+        Assert.NotNull(search.LastQuery!.CreatedFromUtc);
+
+        await vm.ShowCreatedThisWeekCommand.ExecuteAsync(null);
+        Assert.NotNull(search.LastQuery!.CreatedFromUtc);
+
+        await vm.ShowModifiedTodayCommand.ExecuteAsync(null);
+        Assert.NotNull(search.LastQuery!.ModifiedFromUtc);
+    }
+
+    [Fact]
     public async Task Search_tracks_recent_queries_and_exposes_zero_result_message()
     {
         var folderId = Guid.NewGuid();
