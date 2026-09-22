@@ -22,6 +22,22 @@ public sealed class StartupMaintenanceTests
         Assert.True(result.BackupCreated);
     }
 
+    [Fact]
+    public async Task Startup_can_skip_automatic_recovery_after_user_has_handled_prompt()
+    {
+        var calls = new List<string>();
+        var recovery = new FakeRecoveryService(calls);
+        var backups = new FakeBackupService(calls);
+        var sut = new StartupMaintenanceService(recovery, backups);
+
+        var result = await sut.RunAsync(
+            CancellationToken.None,
+            recoverPendingDrafts: false);
+
+        Assert.Equal(new[] { "backup" }, calls);
+        Assert.Equal(0, result.RecoveredDrafts);
+    }
+
     private sealed class FakeRecoveryService : IRecoveryService
     {
         private readonly List<string> _calls;
