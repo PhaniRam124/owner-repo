@@ -9,13 +9,14 @@ public sealed class KeyboardShortcutService
         Window window,
         Action focusSearch,
         Action openQuickCapture,
+        ICommand newNoteCommand,
         ICommand saveCommand,
         ICommand closeWorkspaceCommand,
         ICommand toggleFavoriteCommand)
     {
         ArgumentNullException.ThrowIfNull(window);
 
-        window.InputBindings.Add(new KeyBinding(new DelegateCommand(openQuickCapture), Key.N, ModifierKeys.Control));
+        window.InputBindings.Add(new KeyBinding(newNoteCommand, Key.N, ModifierKeys.Control));
         window.InputBindings.Add(new KeyBinding(new DelegateCommand(openQuickCapture), Key.N, ModifierKeys.Control | ModifierKeys.Shift));
         window.InputBindings.Add(new KeyBinding(new DelegateCommand(focusSearch), Key.K, ModifierKeys.Control));
         window.InputBindings.Add(new KeyBinding(new DelegateCommand(focusSearch), Key.F, ModifierKeys.Control));
