@@ -208,8 +208,23 @@
             <Border Grid.Column="2" Background="{StaticResource SurfaceBrush}">
                 <DockPanel Margin="10">
                     <StackPanel DockPanel.Dock="Top">
-                        <TextBlock Text="NOTES" Foreground="{StaticResource MutedBrush}"
-                                   FontSize="10" FontWeight="SemiBold" Margin="4,4,0,7"/>
+                        <Grid Margin="4,4,0,7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="NOTES"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1"
+                                      Width="145"
+                                      ItemsSource="{Binding NoteSortOptions}"
+                                      SelectedItem="{Binding SelectedNoteSort, Mode=TwoWay}"
+                                      ToolTip="Sort notes"
+                                      VerticalContentAlignment="Center"/>
+                        </Grid>
                         <Button Content="+ New Note" HorizontalAlignment="Stretch"
                                 Background="{StaticResource TealBrush}" Foreground="White"
                                 Margin="0,0,0,8"
@@ -228,9 +243,60 @@
                                         <Button Style="{StaticResource NavButton}"
                                                 Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding NoteId}">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding FolderPath}" FontSize="10" Foreground="{StaticResource MutedBrush}"/>
+                                            <StackPanel Margin="0,2">
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               DockPanel.Dock="Left"/>
+                                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                        <TextBlock Text="★" Foreground="{StaticResource CopperBrush}" Margin="5,0,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Text="●" Foreground="{StaticResource PlumBrush}" Margin="5,0,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding Snippet}"
+                                                           TextWrapping="Wrap"
+                                                           MaxHeight="34"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           Margin="0,2,0,2"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding FolderPath}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource MutedBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding ModifiedAtUtc, StringFormat={}{0:g}}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource MutedBrush}"
+                                                               Margin="8,0,0,0"/>
+                                                </Grid>
                                             </StackPanel>
                                         </Button>
                                     </DataTemplate>
@@ -244,9 +310,47 @@
                                                 Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding Id}">
                                             <StackPanel Margin="0,2">
-                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding ModifiedAtUtc, StringFormat={}{0:g}}"
-                                                           FontSize="10" Foreground="{StaticResource MutedBrush}"/>
+                                                <DockPanel>
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               DockPanel.Dock="Left"/>
+                                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                                        <TextBlock Text="★" Foreground="{StaticResource CopperBrush}" Margin="5,0,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Text="●" Foreground="{StaticResource PlumBrush}" Margin="5,0,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding PlainText}"
+                                                           TextWrapping="Wrap"
+                                                           MaxHeight="34"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           Margin="0,2,0,2"/>
+                                                <TextBlock Text="{Binding ModifiedAtUtc, StringFormat=Modified {0:g}}"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"/>
                                             </StackPanel>
                                         </Button>
                                     </DataTemplate>
