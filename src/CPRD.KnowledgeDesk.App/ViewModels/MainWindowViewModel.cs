@@ -140,9 +140,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        Folders.Clear();
-        foreach (var folder in await _folders.GetTreeAsync(CancellationToken.None))
-            Folders.Add(folder);
+        await RefreshFoldersAsync();
 
         await Dashboard.RefreshAsync();
         await Trash.RefreshAsync();
@@ -159,6 +157,44 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public Task FlushEditorAsync(CancellationToken cancellationToken = default) =>
         Editor.FlushAsync(true, cancellationToken);
+
+    public async Task<Folder> CreateFolderAsync(Guid? parentId, string name)
+    {
+        var folder = await _folders.CreateAsync(parentId, name, CancellationToken.None);
+        await RefreshFoldersAsync();
+        await Dashboard.RefreshAsync();
+        StatusText = $"Folder created: {folder.Name}";
+        return folder;
+    }
+
+    public async Task RenameFolderAsync(Guid folderId, string newName)
+    {
+        await _folders.RenameAsync(folderId, newName, CancellationToken.None);
+        await RefreshFoldersAsync();
+        await Dashboard.RefreshAsync();
+        StatusText = $"Folder renamed: {newName.Trim()}";
+    }
+
+    public async Task ArchiveFolderAsync(Guid folderId)
+    {
+        await _folders.ArchiveAsync(folderId, CancellationToken.None);
+        if (SelectedFolderId == folderId)
+            SelectedFolderId = null;
+
+        await RefreshFoldersAsync();
+        await Dashboard.RefreshAsync();
+        StatusText = "Folder archived.";
+    }
+
+    private async Task RefreshFoldersAsync()
+    {
+        Folders.Clear();
+        foreach (var folder in await _folders.GetTreeAsync(CancellationToken.None))
+        {
+            if (!folder.IsArchived)
+                Folders.Add(folder);
+        }
+    }
 
     private async Task CreateNewNoteAsync()
     {
