@@ -17,6 +17,9 @@ public sealed class DashboardService : IDashboardService
         await connection.OpenAsync(cancellationToken);
 
         var todayUtc = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
+        var daysSinceMonday = ((int)todayUtc.DayOfWeek + 6) % 7;
+        var weekStartUtc = todayUtc.AddDays(-daysSinceMonday);
+
         var totalNotes = await ScalarIntAsync(connection,
             "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND is_archived=0", cancellationToken);
         var folderCount = await ScalarIntAsync(connection,
@@ -27,6 +30,26 @@ public sealed class DashboardService : IDashboardService
             "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND is_archived=0 AND modified_at_utc >= $today",
             cancellationToken,
             ("$today", todayUtc.ToString("O")));
+        var createdToday = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND created_at_utc >= $today",
+            cancellationToken,
+            ("$today", todayUtc.ToString("O")));
+        var createdThisWeek = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND created_at_utc >= $weekStart",
+            cancellationToken,
+            ("$weekStart", weekStartUtc.ToString("O")));
+        var pinnedCount = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND is_archived=0 AND is_pinned=1",
+            cancellationToken);
+        var archivedCount = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NULL AND is_archived=1",
+            cancellationToken);
+        var trashCount = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM notes WHERE deleted_at_utc IS NOT NULL",
+            cancellationToken);
+        var tagCount = await ScalarIntAsync(connection,
+            "SELECT COUNT(*) FROM tags",
+            cancellationToken);
 
         var recent = await LoadItemsAsync(connection,
             "n.deleted_at_utc IS NULL AND n.is_archived=0",
@@ -40,6 +63,14 @@ public sealed class DashboardService : IDashboardService
             "n.deleted_at_utc IS NULL AND n.is_archived=0 AND n.source_type IS NOT NULL",
             "n.created_at_utc DESC",
             cancellationToken);
+        var favorites = await LoadItemsAsync(connection,
+            "n.deleted_at_utc IS NULL AND n.is_archived=0 AND n.is_favorite=1",
+            "n.modified_at_utc DESC",
+            cancellationToken);
+        var recentlyModified = await LoadItemsAsync(connection,
+            "n.deleted_at_utc IS NULL AND n.is_archived=0",
+            "n.modified_at_utc DESC",
+            cancellationToken);
 
         return new DashboardSnapshot(
             totalNotes,
@@ -49,7 +80,17 @@ public sealed class DashboardService : IDashboardService
             recent,
             pinned,
             imported,
-            "Not configured");
+            "Automatic local backup enabled")
+        {
+            CreatedToday = createdToday,
+            CreatedThisWeek = createdThisWeek,
+            PinnedCount = pinnedCount,
+            ArchivedCount = archivedCount,
+            TrashCount = trashCount,
+            TagCount = tagCount,
+            Favorites = favorites,
+            RecentlyModified = recentlyModified
+        };
     }
 
     private static async Task<int> ScalarIntAsync(
