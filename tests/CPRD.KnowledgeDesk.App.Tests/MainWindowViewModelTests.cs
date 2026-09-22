@@ -178,6 +178,69 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(noteId, notes.LastTrashedId);
     }
 
+    [Fact]
+    public async Task Folder_management_refreshes_live_folder_collection()
+    {
+        var root = new Folder(
+            Guid.NewGuid(), null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        var folders = new MutableFolderService(root);
+        var vm = new MainWindowViewModel(
+            folders,
+            new FakeNoteService(),
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+
+        var created = await vm.CreateFolderAsync(null, "Meetings");
+        Assert.Contains(vm.Folders, folder => folder.Id == created.Id && folder.Name == "Meetings");
+
+        await vm.RenameFolderAsync(created.Id, "Meetings 2027");
+        Assert.Contains(vm.Folders, folder => folder.Id == created.Id && folder.Name == "Meetings 2027");
+
+        await vm.ArchiveFolderAsync(created.Id);
+        Assert.DoesNotContain(vm.Folders, folder => folder.Id == created.Id);
+    }
+
+    private sealed class MutableFolderService : IFolderService
+    {
+        private readonly List<Folder> _folders;
+        public MutableFolderService(params Folder[] folders) => _folders = folders.ToList();
+
+        public Task<IReadOnlyList<Folder>> GetTreeAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Folder>>(_folders.ToArray());
+
+        public Task<Folder?> FindByPathAsync(string path, CancellationToken cancellationToken) =>
+            Task.FromResult<Folder?>(null);
+
+        public Task<Folder> CreateAsync(Guid? parentId, string name, CancellationToken cancellationToken)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var folder = new Folder(Guid.NewGuid(), parentId, name, _folders.Count, false, now, now);
+            _folders.Add(folder);
+            return Task.FromResult(folder);
+        }
+
+        public Task RenameAsync(Guid folderId, string newName, CancellationToken cancellationToken)
+        {
+            var index = _folders.FindIndex(folder => folder.Id == folderId);
+            _folders[index] = _folders[index] with { Name = newName };
+            return Task.CompletedTask;
+        }
+
+        public Task MoveAsync(Guid folderId, Guid? newParentId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task ArchiveAsync(Guid folderId, CancellationToken cancellationToken)
+        {
+            var index = _folders.FindIndex(folder => folder.Id == folderId);
+            _folders[index] = _folders[index] with { IsArchived = true };
+            return Task.CompletedTask;
+        }
+
+        public Task RestoreAsync(Guid folderId, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         public Guid? LastRequestedFolderId { get; private set; }
