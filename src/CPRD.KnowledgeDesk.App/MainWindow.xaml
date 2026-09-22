@@ -32,7 +32,7 @@
                 <MenuItem Header="_Find" Command="ApplicationCommands.Find"/>
             </MenuItem>
             <MenuItem Header="_View">
-                <MenuItem Header="_Dashboard" Command="{Binding RefreshDashboardCommand}"/>
+                <MenuItem Header="_Dashboard" Command="{Binding ShowDashboardCommand}"/>
                 <MenuItem Header="Compact Mode"/>
                 <MenuItem Header="Reading Mode"/>
             </MenuItem>
@@ -113,11 +113,12 @@
                         <TextBlock Text="NAVIGATION" Foreground="{StaticResource MutedBrush}"
                                    FontSize="10" FontWeight="SemiBold" Margin="6,5,0,5"/>
                         <Button Style="{StaticResource NavButton}" Content="⌂  Dashboard"
-                                Command="{Binding RefreshDashboardCommand}"/>
+                                Command="{Binding ShowDashboardCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="⌕  All Notes" Command="{Binding ShowAllNotesCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="★  Favorites" Command="{Binding ShowFavoritesCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="●  Pinned" Command="{Binding ShowPinnedCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="◷  Recent" Command="{Binding ShowRecentCommand}"/>
+                        <Button Style="{StaticResource NavButton}" Content="♲  Trash" Command="{Binding ShowTrashCommand}"/>
                         <Separator Margin="0,8"/>
                         <TextBlock Text="FOLDERS" Foreground="{StaticResource MutedBrush}"
                                    FontSize="10" FontWeight="SemiBold" Margin="6,5,0,5"/>
@@ -240,7 +241,12 @@
                         </ScrollViewer>
                     </Border>
 
-                    <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
+                    <TabControl x:Name="WorkspaceTabs"
+                                Grid.Row="1"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                SelectedIndex="{Binding SelectedWorkspaceIndex, Mode=TwoWay}"
+                                SelectionChanged="WorkspaceTabs_SelectionChanged">
                         <TabItem Header="Editor">
                             <views:EditorView x:Name="EditorPane" DataContext="{Binding Editor}"/>
                         </TabItem>
