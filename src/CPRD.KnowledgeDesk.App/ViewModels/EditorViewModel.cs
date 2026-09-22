@@ -89,6 +89,8 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         ToggleFavoriteCommand = new RelayCommand(ToggleFavorite, () => _note is not null);
     }
 
+    public event EventHandler? Saved;
+
     public IAsyncRelayCommand SaveNowCommand { get; }
     public IRelayCommand ToggleFavoriteCommand { get; }
 
@@ -328,6 +330,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
 
             SaveState = "Saved";
             SaveStatus = $"Saved {DateTime.Now:t}";
+            Saved?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
