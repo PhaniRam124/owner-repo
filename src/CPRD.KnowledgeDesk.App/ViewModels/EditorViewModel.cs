@@ -22,6 +22,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
     private string _structuredJson = "{}";
     private string _tagsText = string.Empty;
     private string _savedTagsFingerprint = string.Empty;
+    private Guid? _selectedFolderId;
     private bool _isFavorite;
     private bool _isPinned;
     private string _saveState = "Saved";
@@ -134,6 +135,12 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         set { if (SetProperty(ref _tagsText, value)) MarkDirty(); }
     }
 
+    public Guid? SelectedFolderId
+    {
+        get => _selectedFolderId;
+        set { if (SetProperty(ref _selectedFolderId, value)) MarkDirty(); }
+    }
+
     public bool IsFavorite
     {
         get => _isFavorite;
@@ -174,6 +181,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             ContentPackage = note.ContentPackage;
             PlainText = note.PlainText;
             StructuredJson = note.StructuredJson;
+            SelectedFolderId = note.FolderId;
             TagsText = string.Empty;
             _savedTagsFingerprint = string.Empty;
             IsFavorite = note.IsFavorite;
@@ -213,6 +221,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
             ContentPackage = string.Empty;
             PlainText = string.Empty;
             StructuredJson = "{}";
+            SelectedFolderId = null;
             TagsText = string.Empty;
             _savedTagsFingerprint = string.Empty;
             IsFavorite = false;
@@ -293,7 +302,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
                 Title,
                 ContentPackage,
                 PlainText,
-                current.FolderId,
+                SelectedFolderId ?? current.FolderId,
                 current.NoteType,
                 IsFavorite,
                 IsPinned,
@@ -305,6 +314,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
                 Title = string.IsNullOrWhiteSpace(Title) ? "Untitled Note" : Title.Trim(),
                 ContentPackage = ContentPackage,
                 PlainText = PlainText,
+                FolderId = SelectedFolderId ?? current.FolderId,
                 IsFavorite = IsFavorite,
                 IsPinned = IsPinned,
                 StructuredJson = string.IsNullOrWhiteSpace(StructuredJson) ? "{}" : StructuredJson,
@@ -337,6 +347,7 @@ public sealed class EditorViewModel : ObservableObject, IDisposable
         !string.Equals(note.Title, string.IsNullOrWhiteSpace(Title) ? "Untitled Note" : Title.Trim(), StringComparison.Ordinal) ||
         !string.Equals(note.ContentPackage, ContentPackage, StringComparison.Ordinal) ||
         !string.Equals(note.PlainText, PlainText, StringComparison.Ordinal) ||
+        note.FolderId != (SelectedFolderId ?? note.FolderId) ||
         note.IsFavorite != IsFavorite ||
         note.IsPinned != IsPinned ||
         !string.Equals(note.StructuredJson, string.IsNullOrWhiteSpace(StructuredJson) ? "{}" : StructuredJson, StringComparison.Ordinal) ||
