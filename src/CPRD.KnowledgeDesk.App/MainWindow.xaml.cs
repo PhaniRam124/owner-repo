@@ -100,6 +100,141 @@ public partial class MainWindow : Window
 
     private void Find_Click(object sender, RoutedEventArgs e) => FocusSearch();
 
+    private async void CreateFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var name = PromptForText("Create Folder", "Folder name:", string.Empty);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        await RunMaintenanceAsync("Create Folder", async () =>
+        {
+            await _viewModel.CreateFolderAsync(null, name);
+        });
+    }
+
+    private async void CreateSubfolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem menu ||
+            menu.Tag is not CPRD.KnowledgeDesk.Core.Models.Folder parent)
+            return;
+
+        var name = PromptForText(
+            "Create Subfolder",
+            $"New subfolder under '{parent.Name}':",
+            string.Empty);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        await RunMaintenanceAsync("Create Subfolder", async () =>
+        {
+            await _viewModel.CreateFolderAsync(parent.Id, name);
+        });
+    }
+
+    private async void RenameFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem menu ||
+            menu.Tag is not CPRD.KnowledgeDesk.Core.Models.Folder folder)
+            return;
+
+        var name = PromptForText("Rename Folder", "New folder name:", folder.Name);
+        if (string.IsNullOrWhiteSpace(name) ||
+            string.Equals(name.Trim(), folder.Name, StringComparison.Ordinal))
+            return;
+
+        await RunMaintenanceAsync("Rename Folder", async () =>
+        {
+            await _viewModel.RenameFolderAsync(folder.Id, name);
+        });
+    }
+
+    private async void ArchiveFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem menu ||
+            menu.Tag is not CPRD.KnowledgeDesk.Core.Models.Folder folder)
+            return;
+
+        var result = MessageBox.Show(
+            $"Archive folder '{folder.Name}'?\n\nNotes are preserved in the database and are not deleted.",
+            "Archive Folder",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes) return;
+
+        await RunMaintenanceAsync("Archive Folder", async () =>
+        {
+            await _viewModel.ArchiveFolderAsync(folder.Id);
+        });
+    }
+
+    private string? PromptForText(string title, string prompt, string initialValue)
+    {
+        var owner = this;
+        var dialog = new Window
+        {
+            Title = title,
+            Owner = owner,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            ShowInTaskbar = false,
+            Background = (System.Windows.Media.Brush)FindResource("CanvasBrush")
+        };
+
+        var panel = new System.Windows.Controls.StackPanel
+        {
+            Margin = new Thickness(18),
+            MinWidth = 380
+        };
+
+        panel.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = prompt,
+            FontWeight = FontWeights.SemiBold,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
+        var textBox = new System.Windows.Controls.TextBox
+        {
+            Text = initialValue,
+            MinWidth = 350,
+            Margin = new Thickness(0, 0, 0, 14)
+        };
+        panel.Children.Add(textBox);
+
+        var buttons = new System.Windows.Controls.StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        var cancel = new System.Windows.Controls.Button
+        {
+            Content = "Cancel",
+            MinWidth = 80,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        var ok = new System.Windows.Controls.Button
+        {
+            Content = "OK",
+            MinWidth = 80,
+            IsDefault = true
+        };
+
+        cancel.Click += (_, _) => dialog.DialogResult = false;
+        ok.Click += (_, _) => dialog.DialogResult = true;
+        buttons.Children.Add(cancel);
+        buttons.Children.Add(ok);
+        panel.Children.Add(buttons);
+
+        dialog.Content = panel;
+        dialog.Loaded += (_, _) =>
+        {
+            textBox.Focus();
+            textBox.SelectAll();
+        };
+
+        return dialog.ShowDialog() == true ? textBox.Text.Trim() : null;
+    }
+
     private async void DuplicateFinder_Click(object sender, RoutedEventArgs e)
     {
         var note = _viewModel.Editor.CurrentNote;
