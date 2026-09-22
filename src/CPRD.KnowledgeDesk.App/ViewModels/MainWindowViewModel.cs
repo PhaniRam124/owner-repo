@@ -175,6 +175,8 @@ public sealed class MainWindowViewModel : ObservableObject
         await Trash.RefreshAsync();
 
         var defaultFolder = Folders.FirstOrDefault(folder =>
+                !folder.IsArchived && folder.Name.Equals("Inbox", StringComparison.OrdinalIgnoreCase))
+            ?? Folders.FirstOrDefault(folder =>
                 !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))
             ?? Folders.FirstOrDefault(folder => !folder.IsArchived);
 
@@ -267,6 +269,8 @@ public sealed class MainWindowViewModel : ObservableObject
             await Editor.FlushAsync(true, CancellationToken.None);
 
             var folderId = SelectedFolderId
+                ?? Folders.FirstOrDefault(folder =>
+                        !folder.IsArchived && folder.Name.Equals("Inbox", StringComparison.OrdinalIgnoreCase))?.Id
                 ?? Folders.FirstOrDefault(folder =>
                         !folder.IsArchived && folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))?.Id
                 ?? Folders.FirstOrDefault(folder => !folder.IsArchived)?.Id;
