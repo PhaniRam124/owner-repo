@@ -27,6 +27,10 @@ public interface INoteService
 {
     Task<Note> CreateAsync(NewNoteRequest request, CancellationToken cancellationToken);
     Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<string>> GetTagsAsync(Guid id, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+
     Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken);
     Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken);
     Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken);
