@@ -18,13 +18,35 @@
                      Background="Transparent"
                      Padding="4"
                      Margin="0,0,0,4"/>
-            <DockPanel Margin="4,0,4,8">
-                <TextBlock Text="Tags" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"
+            <Grid Margin="4,0,4,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Folder"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding DataContext.Folders, RelativeSource={RelativeSource AncestorType=Window}}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding SelectedFolderId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Move note to another folder"
+                          VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="3"
+                           Text="Tags"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <TextBox Grid.Column="4"
+                         Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"
                          ToolTip="Comma-separated tags"
                          VerticalContentAlignment="Center"/>
-            </DockPanel>
+            </Grid>
         </StackPanel>
 
         <Border Grid.Row="1" Background="{StaticResource SurfaceAltBrush}"
