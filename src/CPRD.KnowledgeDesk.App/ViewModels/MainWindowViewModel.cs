@@ -82,6 +82,7 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     public ObservableCollection<Folder> Folders { get; } = new();
+    public ObservableCollection<FolderTreeNode> FolderRoots { get; } = new();
     public ObservableCollection<Note> Notes { get; } = new();
     public ObservableCollection<SearchHit> SearchResults { get; } = new();
     public ObservableCollection<Note> WorkspaceNotes { get; } = new();
@@ -190,10 +191,28 @@ public sealed class MainWindowViewModel : ObservableObject
     private async Task RefreshFoldersAsync()
     {
         Folders.Clear();
-        foreach (var folder in await _folders.GetTreeAsync(CancellationToken.None))
+        FolderRoots.Clear();
+
+        var activeFolders = (await _folders.GetTreeAsync(CancellationToken.None))
+            .Where(folder => !folder.IsArchived)
+            .OrderBy(folder => folder.SortOrder)
+            .ThenBy(folder => folder.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        foreach (var folder in activeFolders)
+            Folders.Add(folder);
+
+        var nodes = activeFolders.ToDictionary(
+            folder => folder.Id,
+            folder => new FolderTreeNode(folder));
+
+        foreach (var folder in activeFolders)
         {
-            if (!folder.IsArchived)
-                Folders.Add(folder);
+            var node = nodes[folder.Id];
+            if (folder.ParentId is Guid parentId && nodes.TryGetValue(parentId, out var parent))
+                parent.Children.Add(node);
+            else
+                FolderRoots.Add(node);
         }
     }
 
