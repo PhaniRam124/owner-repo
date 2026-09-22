@@ -42,7 +42,8 @@ public sealed class SearchService : ISearchService
                    n.is_favorite,
                    n.is_pinned,
                    n.modified_at_utc,
-                   bm25(notes_fts) AS rank
+                   bm25(notes_fts) AS rank,
+                   n.is_archived
               FROM notes_fts
               JOIN notes n ON n.id=notes_fts.note_id
              WHERE notes_fts MATCH $match
@@ -79,7 +80,8 @@ public sealed class SearchService : ISearchService
                 reader.GetInt64(5) != 0,
                 reader.GetInt64(6) != 0,
                 DateTimeOffset.Parse(reader.GetString(7)),
-                reader.GetDouble(8)));
+                reader.GetDouble(8),
+                reader.GetInt64(9) != 0));
         }
         return result;
     }
@@ -96,7 +98,7 @@ public sealed class SearchService : ISearchService
             SELECT n.id,n.title,
                    CASE WHEN length(n.plain_text)>180 THEN substr(n.plain_text,1,180) || '...' ELSE n.plain_text END,
                    COALESCE(f.folder_path,''),
-                   n.note_type,n.is_favorite,n.is_pinned,n.modified_at_utc,0.0
+                   n.note_type,n.is_favorite,n.is_pinned,n.modified_at_utc,0.0,n.is_archived
               FROM notes n
               LEFT JOIN notes_fts f ON f.note_id=n.id
              WHERE n.deleted_at_utc IS NULL
