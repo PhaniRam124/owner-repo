@@ -123,6 +123,26 @@ public sealed class NoteRepository
         return await reader.ReadAsync(cancellationToken) ? Read(reader) : null;
     }
 
+    public async Task<IReadOnlyList<string>> GetTagsAsync(Guid noteId, CancellationToken cancellationToken)
+    {
+        var result = new List<string>();
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT t.name
+              FROM note_tags nt
+              JOIN tags t ON t.id=nt.tag_id
+             WHERE nt.note_id=$noteId
+             ORDER BY t.name COLLATE NOCASE
+            """;
+        command.Parameters.AddWithValue("$noteId", noteId.ToString("D"));
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            result.Add(reader.GetString(0));
+        return result;
+    }
+
     public async Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken)
     {
         var result = new List<Note>();
