@@ -33,8 +33,14 @@
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="_Dashboard" Command="{Binding ShowDashboardCommand}"/>
-                <MenuItem Header="Compact Mode"/>
-                <MenuItem Header="Reading Mode"/>
+                <MenuItem x:Name="CompactModeMenuItem"
+                          Header="Compact Mode"
+                          IsCheckable="True"
+                          Click="CompactMode_Click"/>
+                <MenuItem x:Name="ReadingModeMenuItem"
+                          Header="Reading Mode"
+                          IsCheckable="True"
+                          Click="ReadingMode_Click"/>
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="Duplicate Finder"/>
@@ -111,11 +117,11 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260" MinWidth="210"/>
-                <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="340" MinWidth="270"/>
-                <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="NavigationColumn" Width="260" MinWidth="210"/>
+                <ColumnDefinition x:Name="NavigationSplitterColumn" Width="5"/>
+                <ColumnDefinition x:Name="NotesColumn" Width="340" MinWidth="270"/>
+                <ColumnDefinition x:Name="NotesSplitterColumn" Width="5"/>
+                <ColumnDefinition x:Name="WorkspaceColumn" Width="*"/>
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Background="{StaticResource SurfaceAltBrush}"
