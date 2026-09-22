@@ -29,6 +29,29 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task Show_dashboard_refreshes_data_and_switches_workspace_tab()
+    {
+        var folderId = Guid.NewGuid();
+        var dashboard = new FakeDashboardService();
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)),
+            new FakeNoteService(),
+            new FakeTagService(),
+            new FakeSearchService(),
+            dashboard);
+
+        await vm.InitializeAsync();
+        var refreshesAfterStartup = dashboard.RefreshCount;
+
+        await vm.ShowDashboardCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, vm.SelectedWorkspaceIndex);
+        Assert.Equal(refreshesAfterStartup + 1, dashboard.RefreshCount);
+        Assert.Equal("Dashboard refreshed", vm.StatusText);
+    }
+
+    [Fact]
     public async Task Navigation_commands_query_all_favorites_pinned_and_recent()
     {
         var folderId = Guid.NewGuid();
@@ -121,7 +144,17 @@ public sealed class MainWindowViewModelTests
 
     private sealed class FakeDashboardService : IDashboardService
     {
-        public Task<DashboardSnapshot> GetSnapshotAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(new DashboardSnapshot(0, 0, 0, 0, Array.Empty<DashboardItem>(), Array.Empty<DashboardItem>(), Array.Empty<DashboardItem>(), "Not configured"));
+        public int RefreshCount { get; private set; }
+
+        public Task<DashboardSnapshot> GetSnapshotAsync(CancellationToken cancellationToken)
+        {
+            RefreshCount++;
+            return Task.FromResult(new DashboardSnapshot(
+                0, 0, 0, 0,
+                Array.Empty<DashboardItem>(),
+                Array.Empty<DashboardItem>(),
+                Array.Empty<DashboardItem>(),
+                "Not configured"));
+        }
     }
 }
