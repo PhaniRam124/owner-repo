@@ -60,6 +60,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
         Dashboard = new DashboardViewModel(_dashboard);
         Editor = editor;
+        Editor.Saved += Editor_Saved;
         Trash = new TrashViewModel(_notes);
         SelectFolderCommand = new AsyncRelayCommand<Guid>(SelectFolderAsync);
         SelectNoteCommand = new AsyncRelayCommand<Guid>(SelectNoteAsync);
@@ -248,6 +249,8 @@ public sealed class MainWindowViewModel : ObservableObject
 
             await _notes.MarkOpenedAsync(note.Id, DateTimeOffset.UtcNow, CancellationToken.None);
             Editor.Load(note);
+            Editor.LoadTags(Array.Empty<string>());
+            await Dashboard.RefreshAsync();
             CloseActiveWorkspaceCommand.NotifyCanExecuteChanged();
             StatusText = "New note created — start typing.";
         }
@@ -490,6 +493,18 @@ public sealed class MainWindowViewModel : ObservableObject
             await SelectFolderAsync(folderId);
         else
             StatusText = "Search cleared";
+    }
+
+    private async void Editor_Saved(object? sender, EventArgs e)
+    {
+        try
+        {
+            await Dashboard.RefreshAsync();
+        }
+        catch
+        {
+            // Save status remains authoritative; dashboard can be refreshed manually if needed.
+        }
     }
 
     private async Task RefreshDashboardAsync()
