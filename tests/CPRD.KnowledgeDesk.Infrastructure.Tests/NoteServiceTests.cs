@@ -38,6 +38,35 @@ public sealed class NoteServiceTests
         Assert.Equal("Payment reference 456", (string?)await command.ExecuteScalarAsync());
     }
 
+    [Fact]
+    public async Task GetTagsAsync_returns_tags_created_for_note()
+    {
+        using var temp = new TempDirectory();
+        var paths = new TestAppPaths(temp.Path);
+        var db = new KnowledgeDb(paths);
+        await db.InitializeAsync(default);
+
+        var folderId = await GetFolderIdAsync(db, "Office");
+        var sut = new NoteService(new NoteRepository(db), new SearchRepository(db), db);
+
+        var note = await sut.CreateAsync(
+            new NewNoteRequest(
+                "Tagged Note",
+                string.Empty,
+                "body",
+                folderId,
+                "Standard Note",
+                "{}",
+                new[] { "Conference", "Vendor" }),
+            default);
+
+        var tags = await sut.GetTagsAsync(note.Id, default);
+
+        Assert.Equal(
+            new[] { "Conference", "Vendor" },
+            tags.OrderBy(value => value, StringComparer.OrdinalIgnoreCase));
+    }
+
     private static async Task<Guid> GetFolderIdAsync(KnowledgeDb db, string name)
     {
         await using var connection = db.OpenConnection();
