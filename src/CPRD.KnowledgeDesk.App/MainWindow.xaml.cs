@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using CPRD.KnowledgeDesk.Core.Services;
 using Microsoft.Win32;
 using System.ComponentModel;
@@ -96,6 +97,115 @@ public partial class MainWindow : Window
     }
 
     private void QuickCapture_Click(object sender, RoutedEventArgs e) => ShowQuickCapture();
+
+    private void Find_Click(object sender, RoutedEventArgs e) => FocusSearch();
+
+    private async void DuplicateFinder_Click(object sender, RoutedEventArgs e)
+    {
+        var note = _viewModel.Editor.CurrentNote;
+        if (note is null)
+        {
+            MessageBox.Show(
+                "Select a note first, then run Duplicate Finder.",
+                "Duplicate Finder",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            await FlushPendingChangesAsync();
+
+            var service = _services.GetRequiredService<IDuplicateDetectionService>();
+            var candidates = (await service.FindCandidatesAsync(
+                    new CPRD.KnowledgeDesk.Core.Models.DuplicateProbe(
+                        _viewModel.Editor.Title,
+                        _viewModel.Editor.PlainText),
+                    CancellationToken.None))
+                .Where(candidate => candidate.NoteId != note.Id)
+                .Take(12)
+                .ToArray();
+
+            if (candidates.Length == 0)
+            {
+                MessageBox.Show(
+                    "No exact or highly similar active notes were found.",
+                    "Duplicate Finder",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            var builder = new StringBuilder();
+            builder.AppendLine("Possible duplicate notes:");
+            builder.AppendLine();
+
+            foreach (var candidate in candidates)
+            {
+                builder.Append("• ")
+                    .Append(candidate.Title)
+                    .Append(" — ")
+                    .Append(candidate.Reason)
+                    .Append(" (")
+                    .Append(candidate.Similarity.ToString("P0"))
+                    .AppendLine(")");
+            }
+
+            builder.AppendLine();
+            builder.Append("No notes were changed or merged.");
+
+            MessageBox.Show(
+                builder.ToString(),
+                "Duplicate Finder",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            await _services.GetRequiredService<IAppLogService>()
+                .LogAsync(
+                    AppLogLevel.Error,
+                    "Duplicate Finder failed.",
+                    ex,
+                    CancellationToken.None);
+
+            MessageBox.Show(
+                $"Duplicate Finder failed.\n\n{ex.Message}",
+                "Duplicate Finder",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void KeyboardShortcuts_Click(object sender, RoutedEventArgs e)
+    {
+        MessageBox.Show(
+            "Ctrl+N        New Note\n" +
+            "Ctrl+Shift+N  Quick Note\n" +
+            "Ctrl+K        Global Search\n" +
+            "Ctrl+F        Global Search\n" +
+            "Ctrl+S        Save Current Note\n" +
+            "Ctrl+W        Close Workspace Note\n" +
+            "Ctrl+Shift+F  Toggle Favorite",
+            "Keyboard Shortcuts",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        var paths = _services.GetRequiredService<IAppPaths>();
+        var version = typeof(MainWindow).Assembly.GetName().Version?.ToString() ?? "Unknown";
+
+        MessageBox.Show(
+            $"CPRD Knowledge Desk\nVersion {version}\n\n" +
+            "Local-first Windows notes and knowledge management.\n\n" +
+            $"Database:\n{paths.DatabasePath}",
+            "About CPRD Knowledge Desk",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
 
     private void CompactMode_Click(object sender, RoutedEventArgs e)
     {
