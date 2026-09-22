@@ -32,6 +32,7 @@ public partial class MainWindow : Window
             this,
             FocusSearch,
             ShowQuickCapture,
+            viewModel.CreateNewNoteCommand,
             viewModel.Editor.SaveNowCommand,
             viewModel.CloseActiveWorkspaceCommand,
             viewModel.Editor.ToggleFavoriteCommand);
