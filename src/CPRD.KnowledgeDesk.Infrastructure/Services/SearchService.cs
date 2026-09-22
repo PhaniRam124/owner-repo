@@ -53,6 +53,8 @@ public sealed class SearchService : ISearchService
                AND ($noteType IS NULL OR n.note_type=$noteType)
                AND ($modifiedFrom IS NULL OR n.modified_at_utc >= $modifiedFrom)
                AND ($modifiedTo IS NULL OR n.modified_at_utc <= $modifiedTo)
+               AND ($createdFrom IS NULL OR n.created_at_utc >= $createdFrom)
+               AND ($createdTo IS NULL OR n.created_at_utc <= $createdTo)
                AND ($favoritesOnly=0 OR n.is_favorite=1)
                AND ($pinnedOnly=0 OR n.is_pinned=1)
                {tagCondition}
@@ -133,6 +135,8 @@ public sealed class SearchService : ISearchService
                AND ($noteType IS NULL OR n.note_type=$noteType)
                AND ($modifiedFrom IS NULL OR n.modified_at_utc >= $modifiedFrom)
                AND ($modifiedTo IS NULL OR n.modified_at_utc <= $modifiedTo)
+               AND ($createdFrom IS NULL OR n.created_at_utc >= $createdFrom)
+               AND ($createdTo IS NULL OR n.created_at_utc <= $createdTo)
                AND ($favoritesOnly=0 OR n.is_favorite=1)
                AND ($pinnedOnly=0 OR n.is_pinned=1)
                AND (n.created_at_utc LIKE $dateText OR n.modified_at_utc LIKE $dateText)
@@ -189,6 +193,8 @@ public sealed class SearchService : ISearchService
                AND ($noteType IS NULL OR n.note_type=$noteType)
                AND ($modifiedFrom IS NULL OR n.modified_at_utc >= $modifiedFrom)
                AND ($modifiedTo IS NULL OR n.modified_at_utc <= $modifiedTo)
+               AND ($createdFrom IS NULL OR n.created_at_utc >= $createdFrom)
+               AND ($createdTo IS NULL OR n.created_at_utc <= $createdTo)
                AND ($favoritesOnly=0 OR n.is_favorite=1)
                AND ($pinnedOnly=0 OR n.is_pinned=1)
                {tagCondition}
@@ -249,6 +255,8 @@ public sealed class SearchService : ISearchService
         command.Parameters.AddWithValue("$noteType", string.IsNullOrWhiteSpace(query.NoteType) ? DBNull.Value : query.NoteType.Trim());
         command.Parameters.AddWithValue("$modifiedFrom", query.ModifiedFromUtc?.ToString("O") ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("$modifiedTo", query.ModifiedToUtc?.ToString("O") ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("$createdFrom", query.CreatedFromUtc?.ToString("O") ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("$createdTo", query.CreatedToUtc?.ToString("O") ?? (object)DBNull.Value);
         command.Parameters.AddWithValue("$favoritesOnly", query.FavoritesOnly ? 1 : 0);
         command.Parameters.AddWithValue("$pinnedOnly", query.PinnedOnly ? 1 : 0);
         command.Parameters.AddWithValue("$limit", Math.Clamp(query.Limit, 1, 200));
