@@ -96,6 +96,45 @@ public partial class MainWindow : Window
 
     private void QuickCapture_Click(object sender, RoutedEventArgs e) => ShowQuickCapture();
 
+    private void CompactMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (CompactModeMenuItem.IsChecked)
+        {
+            ReadingModeMenuItem.IsChecked = false;
+            ApplyWorkspaceLayout(WorkspaceLayoutMode.Compact);
+        }
+        else
+        {
+            ApplyWorkspaceLayout(WorkspaceLayoutMode.Normal);
+        }
+    }
+
+    private void ReadingMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (ReadingModeMenuItem.IsChecked)
+        {
+            CompactModeMenuItem.IsChecked = false;
+            ApplyWorkspaceLayout(WorkspaceLayoutMode.Reading);
+        }
+        else
+        {
+            ApplyWorkspaceLayout(WorkspaceLayoutMode.Normal);
+        }
+    }
+
+    private void ApplyWorkspaceLayout(WorkspaceLayoutMode mode)
+    {
+        var layout = WorkspaceLayoutPolicy.For(mode);
+
+        NavigationColumn.MinWidth = layout.ShowNavigation ? 180 : 0;
+        NavigationColumn.Width = new GridLength(layout.NavigationWidth);
+        NavigationSplitterColumn.Width = new GridLength(layout.ShowNavigation ? 5 : 0);
+
+        NotesColumn.MinWidth = layout.ShowNotes ? 230 : 0;
+        NotesColumn.Width = new GridLength(layout.NotesWidth);
+        NotesSplitterColumn.Width = new GridLength(layout.ShowNotes ? 5 : 0);
+    }
+
     private async void Backup_Click(object sender, RoutedEventArgs e)
     {
         await RunMaintenanceAsync("Backup", async () =>
