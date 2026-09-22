@@ -72,9 +72,15 @@
 
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Cancel" Click="Cancel_Click" Margin="0,0,8,0"/>
-            <Button Content="Save Note"
+            <Button Content="Save"
                     Command="{Binding SaveCommand}"
                     Background="{StaticResource CopperBrush}"
+                    Foreground="White"
+                    Padding="18,8"
+                    Margin="0,0,8,0"/>
+            <Button Content="Save &amp; Open"
+                    Click="SaveAndOpen_Click"
+                    Background="{StaticResource TealBrush}"
                     Foreground="White"
                     Padding="18,8"/>
         </StackPanel>
