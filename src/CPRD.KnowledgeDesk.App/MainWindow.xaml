@@ -245,8 +245,7 @@
                                 Grid.Row="1"
                                 BorderThickness="0"
                                 Background="Transparent"
-                                SelectedIndex="{Binding SelectedWorkspaceIndex, Mode=TwoWay}"
-                                SelectionChanged="WorkspaceTabs_SelectionChanged">
+                                SelectedIndex="{Binding SelectedWorkspaceIndex, Mode=TwoWay}">
                         <TabItem Header="Editor">
                             <views:EditorView x:Name="EditorPane" DataContext="{Binding Editor}"/>
                         </TabItem>
