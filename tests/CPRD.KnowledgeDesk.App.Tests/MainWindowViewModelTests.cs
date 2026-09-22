@@ -84,6 +84,31 @@ public sealed class MainWindowViewModelTests
         Assert.False(search.LastQuery.PinnedOnly);
     }
 
+    [Fact]
+    public async Task Search_tracks_recent_queries_and_exposes_zero_result_message()
+    {
+        var folderId = Guid.NewGuid();
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)),
+            new FakeNoteService(),
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+        vm.GlobalSearchText = "2027";
+        await vm.SearchCommand.ExecuteAsync(null);
+
+        Assert.Equal("2027", vm.RecentSearches[0]);
+        Assert.Contains("No notes found", vm.EmptyStateText, StringComparison.OrdinalIgnoreCase);
+
+        await vm.ClearSearchCommand.ExecuteAsync(null);
+
+        Assert.Equal(string.Empty, vm.GlobalSearchText);
+        Assert.Equal(string.Empty, vm.EmptyStateText);
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         public Guid? LastRequestedFolderId { get; private set; }
