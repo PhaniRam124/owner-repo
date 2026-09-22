@@ -10,13 +10,22 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                 FontSize="24"
-                 FontWeight="SemiBold"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 Padding="4"
-                 Margin="0,0,0,8"/>
+        <StackPanel>
+            <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                     FontSize="24"
+                     FontWeight="SemiBold"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     Padding="4"
+                     Margin="0,0,0,4"/>
+            <DockPanel Margin="4,0,4,8">
+                <TextBlock Text="Tags" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Comma-separated tags"
+                         VerticalContentAlignment="Center"/>
+            </DockPanel>
+        </StackPanel>
 
         <Border Grid.Row="1" Background="{StaticResource SurfaceAltBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
