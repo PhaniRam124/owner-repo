@@ -74,6 +74,9 @@ public sealed class MainWindowViewModel : ObservableObject
         ShowFavoritesCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Favorites", true, false));
         ShowPinnedCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Pinned", false, true));
         ShowRecentCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Recent", false, false));
+        ShowCreatedTodayCommand = new AsyncRelayCommand(ShowCreatedTodayAsync);
+        ShowCreatedThisWeekCommand = new AsyncRelayCommand(ShowCreatedThisWeekAsync);
+        ShowModifiedTodayCommand = new AsyncRelayCommand(ShowModifiedTodayAsync);
         ShowArchivedCommand = new AsyncRelayCommand(LoadArchivedAsync);
         CreateNewNoteCommand = new AsyncRelayCommand(CreateNewNoteAsync);
         ArchiveCurrentNoteCommand = new AsyncRelayCommand(ArchiveCurrentNoteAsync);
@@ -114,6 +117,9 @@ public sealed class MainWindowViewModel : ObservableObject
     public IAsyncRelayCommand ShowFavoritesCommand { get; }
     public IAsyncRelayCommand ShowPinnedCommand { get; }
     public IAsyncRelayCommand ShowRecentCommand { get; }
+    public IAsyncRelayCommand ShowCreatedTodayCommand { get; }
+    public IAsyncRelayCommand ShowCreatedThisWeekCommand { get; }
+    public IAsyncRelayCommand ShowModifiedTodayCommand { get; }
     public IAsyncRelayCommand ShowArchivedCommand { get; }
     public IAsyncRelayCommand CreateNewNoteCommand { get; }
     public IAsyncRelayCommand ArchiveCurrentNoteCommand { get; }
@@ -450,6 +456,109 @@ public sealed class MainWindowViewModel : ObservableObject
         EmptyStateText = SearchResults.Count == 0 ? $"No notes found in {label}." : string.Empty;
         ApplyNoteSort();
         StatusText = $"{label}: {SearchResults.Count} note(s)";
+    }
+
+    private Task ShowCreatedTodayAsync()
+    {
+        var (startUtc, endUtc) = LocalDayBoundsUtc(DateTimeOffset.Now);
+        return LoadDateFilteredNavigationAsync(
+            "Created Today",
+            startUtc,
+            endUtc,
+            null,
+            null);
+    }
+
+    private Task ShowCreatedThisWeekAsync()
+    {
+        var now = DateTimeOffset.Now;
+        var dayStart = new DateTimeOffset(
+            now.Year,
+            now.Month,
+            now.Day,
+            0,
+            0,
+            0,
+            now.Offset);
+        var daysSinceMonday = ((int)dayStart.DayOfWeek + 6) % 7;
+        var weekStartUtc = dayStart.AddDays(-daysSinceMonday).ToUniversalTime();
+        var nextWeekUtc = dayStart.AddDays(7 - daysSinceMonday).ToUniversalTime();
+
+        return LoadDateFilteredNavigationAsync(
+            "Created This Week",
+            weekStartUtc,
+            nextWeekUtc,
+            null,
+            null);
+    }
+
+    private Task ShowModifiedTodayAsync()
+    {
+        var (startUtc, endUtc) = LocalDayBoundsUtc(DateTimeOffset.Now);
+        return LoadDateFilteredNavigationAsync(
+            "Modified Today",
+            null,
+            null,
+            startUtc,
+            endUtc);
+    }
+
+    private async Task LoadDateFilteredNavigationAsync(
+        string label,
+        DateTimeOffset? createdFromUtc,
+        DateTimeOffset? createdToUtc,
+        DateTimeOffset? modifiedFromUtc,
+        DateTimeOffset? modifiedToUtc)
+    {
+        await Editor.FlushAsync(true, CancellationToken.None);
+
+        SelectedWorkspaceIndex = 0;
+        SelectedFolderId = null;
+        Notes.Clear();
+        SearchResults.Clear();
+
+        var query = new SearchQuery(
+            string.Empty,
+            null,
+            Array.Empty<Guid>(),
+            modifiedFromUtc,
+            modifiedToUtc,
+            null,
+            false,
+            false,
+            false,
+            false,
+            200)
+        {
+            CreatedFromUtc = createdFromUtc,
+            CreatedToUtc = createdToUtc
+        };
+
+        foreach (var hit in await _search.SearchAsync(query, CancellationToken.None))
+            SearchResults.Add(hit);
+
+        EmptyStateText = SearchResults.Count == 0
+            ? $"No notes found for {label}."
+            : string.Empty;
+        ApplyNoteSort();
+        StatusText = $"{label}: {SearchResults.Count} note(s)";
+    }
+
+    private static (DateTimeOffset StartUtc, DateTimeOffset EndUtc) LocalDayBoundsUtc(
+        DateTimeOffset localNow)
+    {
+        var startLocal = new DateTimeOffset(
+            localNow.Year,
+            localNow.Month,
+            localNow.Day,
+            0,
+            0,
+            0,
+            localNow.Offset);
+
+        return (
+            startLocal.ToUniversalTime(),
+            startLocal.AddDays(1).ToUniversalTime());
     }
 
     private async Task LoadArchivedAsync()
