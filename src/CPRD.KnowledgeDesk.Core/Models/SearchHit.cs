@@ -11,7 +11,11 @@ public sealed record SearchQuery(
     bool FavoritesOnly,
     bool PinnedOnly,
     bool HasAttachments,
-    int Limit);
+    int Limit)
+{
+    public DateTimeOffset? CreatedFromUtc { get; init; }
+    public DateTimeOffset? CreatedToUtc { get; init; }
+}
 
 public sealed record SearchHit(
     Guid NoteId,
