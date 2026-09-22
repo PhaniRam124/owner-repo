@@ -215,6 +215,23 @@ public sealed class MainWindowViewModel : ObservableObject
         StatusText = "Folder archived.";
     }
 
+    public async Task DeleteFolderAsync(Guid folderId, Guid destinationFolderId)
+    {
+        await Editor.FlushAsync(true, CancellationToken.None);
+        await _folders.DeleteAsync(folderId, destinationFolderId, CancellationToken.None);
+
+        if (SelectedFolderId == folderId)
+            SelectedFolderId = destinationFolderId;
+
+        await RefreshFoldersAsync();
+        await Dashboard.RefreshAsync();
+
+        if (SelectedFolderId is Guid selected)
+            await SelectFolderAsync(selected);
+
+        StatusText = "Folder deleted safely; its notes were moved.";
+    }
+
     private async Task RefreshFoldersAsync()
     {
         Folders.Clear();
