@@ -52,6 +52,34 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task Folder_tree_preserves_parent_child_hierarchy()
+    {
+        var rootId = Guid.NewGuid();
+        var childId = Guid.NewGuid();
+        var grandChildId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(
+                new Folder(rootId, null, "Office", 0, false, now, now),
+                new Folder(childId, rootId, "IT Operations", 0, false, now, now),
+                new Folder(grandChildId, childId, "Firewall", 0, false, now, now)),
+            new FakeNoteService(),
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+
+        var office = Assert.Single(vm.FolderRoots);
+        Assert.Equal("Office", office.Name);
+        var it = Assert.Single(office.Children);
+        Assert.Equal("IT Operations", it.Name);
+        var firewall = Assert.Single(it.Children);
+        Assert.Equal("Firewall", firewall.Name);
+    }
+
+    [Fact]
     public async Task Navigation_commands_query_all_favorites_pinned_and_recent()
     {
         var folderId = Guid.NewGuid();
