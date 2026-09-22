@@ -75,14 +75,26 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="GlobalSearchBox"
                              Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
-                             ToolTip="Search all notes (Ctrl+K)"
+                             ToolTip="Search all notes (Ctrl+K, Enter to search)"
+                             KeyDown="GlobalSearchBox_KeyDown"
                              VerticalContentAlignment="Center"/>
                     <Button Grid.Column="1" Content="Search" Command="{Binding SearchCommand}"
                             Background="{StaticResource LavenderBrush}" Foreground="White"
                             Padding="16,7" Margin="6,0,0,0"/>
+                    <Button Grid.Column="2" Content="Clear" Command="{Binding ClearSearchCommand}"
+                            Padding="12,7" Margin="5,0,0,0"/>
+                    <ComboBox Grid.Column="3"
+                              Width="130"
+                              Margin="5,0,0,0"
+                              ItemsSource="{Binding RecentSearches}"
+                              SelectionChanged="RecentSearches_SelectionChanged"
+                              ToolTip="Recent searches"
+                              VerticalContentAlignment="Center"/>
                 </Grid>
 
                 <Button Grid.Column="3" Content="+ Quick Note" Margin="14,0,0,0"
@@ -154,6 +166,10 @@
                                 Background="{StaticResource TealBrush}" Foreground="White"
                                 Margin="0,0,0,8"
                                 Command="{Binding CreateNewNoteCommand}"/>
+                        <TextBlock Text="{Binding EmptyStateText}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="4,2,4,8"/>
                     </StackPanel>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
