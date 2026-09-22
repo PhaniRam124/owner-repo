@@ -6,6 +6,16 @@ public sealed record DashboardItem(
     string FolderPath,
     DateTimeOffset ModifiedAtUtc);
 
+public sealed record DashboardFolderSummary(
+    Guid FolderId,
+    string Name,
+    string FolderPath,
+    int NoteCount);
+
+public sealed record DashboardTrendPoint(
+    DateTimeOffset DayUtc,
+    int NoteCount);
+
 public sealed record DashboardSnapshot(
     int TotalNotes,
     int FolderCount,
@@ -24,4 +34,6 @@ public sealed record DashboardSnapshot(
     public int TagCount { get; init; }
     public IReadOnlyList<DashboardItem> Favorites { get; init; } = Array.Empty<DashboardItem>();
     public IReadOnlyList<DashboardItem> RecentlyModified { get; init; } = Array.Empty<DashboardItem>();
+    public IReadOnlyList<DashboardFolderSummary> FolderSummary { get; init; } = Array.Empty<DashboardFolderSummary>();
+    public IReadOnlyList<DashboardTrendPoint> CreatedOverTime { get; init; } = Array.Empty<DashboardTrendPoint>();
 }
