@@ -10,7 +10,10 @@
 
         <DockPanel Margin="0,0,0,10">
             <TextBlock Text="Trash" FontSize="24" FontWeight="SemiBold" DockPanel.Dock="Left"/>
-            <Button Content="Refresh" Command="{Binding RefreshCommand}" DockPanel.Dock="Right"/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
+                <Button Content="Empty Trash" Click="EmptyTrash_Click"/>
+            </StackPanel>
         </DockPanel>
 
         <ListBox Grid.Row="1" ItemsSource="{Binding Items}" BorderThickness="0" Background="Transparent">
@@ -32,8 +35,8 @@
                                         Command="{Binding DataContext.RestoreCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding Id}"/>
                                 <Button Content="Delete Permanently"
-                                        Command="{Binding DataContext.DeletePermanentlyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding Id}"/>
+                                        Tag="{Binding Id}"
+                                        Click="DeletePermanently_Click"/>
                             </StackPanel>
                         </Grid>
                     </Border>
