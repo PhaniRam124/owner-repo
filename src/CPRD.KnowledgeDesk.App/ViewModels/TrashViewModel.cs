@@ -17,12 +17,14 @@ public sealed class TrashViewModel : ObservableObject
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         RestoreCommand = new AsyncRelayCommand<Guid>(RestoreAsync);
         DeletePermanentlyCommand = new AsyncRelayCommand<Guid>(DeletePermanentlyAsync);
+        EmptyTrashCommand = new AsyncRelayCommand(EmptyTrashAsync, () => Items.Count > 0);
     }
 
     public ObservableCollection<Note> Items { get; } = new();
     public IAsyncRelayCommand RefreshCommand { get; }
     public AsyncRelayCommand<Guid> RestoreCommand { get; }
     public AsyncRelayCommand<Guid> DeletePermanentlyCommand { get; }
+    public IAsyncRelayCommand EmptyTrashCommand { get; }
 
     public string Status
     {
@@ -36,6 +38,7 @@ public sealed class TrashViewModel : ObservableObject
         foreach (var note in await _notes.ListTrashAsync(CancellationToken.None))
             Items.Add(note);
         Status = Items.Count == 0 ? "Trash is empty" : $"{Items.Count} deleted note(s)";
+        EmptyTrashCommand.NotifyCanExecuteChanged();
     }
 
     private async Task RestoreAsync(Guid id)
@@ -50,5 +53,15 @@ public sealed class TrashViewModel : ObservableObject
         await _notes.DeletePermanentlyAsync(id, CancellationToken.None);
         await RefreshAsync();
         Status = "Note permanently deleted";
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        var ids = Items.Select(note => note.Id).ToArray();
+        foreach (var id in ids)
+            await _notes.DeletePermanentlyAsync(id, CancellationToken.None);
+
+        await RefreshAsync();
+        Status = "Trash is empty";
     }
 }
