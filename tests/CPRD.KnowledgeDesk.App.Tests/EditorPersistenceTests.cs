@@ -27,6 +27,25 @@ public sealed class EditorPersistenceTests
         Assert.Equal(second.Id, vm.CurrentNote!.Id);
     }
 
+    [Fact]
+    public async Task Saving_edited_note_preserves_loaded_tags()
+    {
+        var notes = new FakeNoteService();
+        using var vm = new EditorViewModel(notes);
+        var note = CreateNote("Tagged", "body", string.Empty);
+
+        vm.Load(note);
+        vm.LoadTags(new[] { "Conference", "Vendor" });
+        vm.Title = "Tagged Updated";
+
+        await vm.FlushAsync(true, CancellationToken.None);
+
+        Assert.NotNull(notes.LastUpdate);
+        Assert.Equal(
+            new[] { "Conference", "Vendor" },
+            notes.LastUpdate!.Tags.OrderBy(value => value, StringComparer.OrdinalIgnoreCase));
+    }
+
     private static Note CreateNote(string title, string plainText, string package)
     {
         var now = DateTimeOffset.UtcNow;
@@ -51,10 +70,16 @@ public sealed class EditorPersistenceTests
 
     private sealed class FakeNoteService : INoteService
     {
+        public UpdateNoteRequest? LastUpdate { get; private set; }
+
         public Task<Note> CreateAsync(NewNoteRequest request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
         public Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Note?>(null);
-        public Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken)
+        {
+            LastUpdate = request;
+            return Task.CompletedTask;
+        }
         public Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<Note>>(Array.Empty<Note>());
         public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) => Task.CompletedTask;
