@@ -25,7 +25,22 @@ public sealed class KnowledgeDb
             ForeignKeys = true,
             DefaultTimeout = 10
         };
-        return new SqliteConnection(builder.ToString());
+
+        var connection = new SqliteConnection(builder.ToString());
+        connection.StateChange += (_, args) =>
+        {
+            if (args.CurrentState != System.Data.ConnectionState.Open)
+                return;
+
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                PRAGMA busy_timeout=10000;
+                PRAGMA foreign_keys=ON;
+                """;
+            command.ExecuteNonQuery();
+        };
+
+        return connection;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -68,6 +83,8 @@ public sealed class KnowledgeDb
         var count = Convert.ToInt32(await countCommand.ExecuteScalarAsync(cancellationToken));
         if (count == 0)
             await SeedFoldersAsync(connection, transaction, cancellationToken);
+
+        await EnsureInboxAsync(connection, transaction, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
     }
@@ -133,6 +150,57 @@ public sealed class KnowledgeDb
         var itChildren = new[] { "Firewall", "Internet / ISP", "Microsoft 365", "Cloud", "VDI", "Assets" };
         for (var index = 0; index < itChildren.Length; index++)
             await InsertFolderAsync(connection, transaction, Guid.NewGuid(), itOperationsId, itChildren[index], index, now, cancellationToken);
+    }
+
+    private static async Task EnsureInboxAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using (var reactivate = connection.CreateCommand())
+        {
+            reactivate.Transaction = transaction;
+            reactivate.CommandText = """
+                UPDATE folders
+                   SET is_archived=0,
+                       modified_at_utc=$modified
+                 WHERE parent_id IS NULL
+                   AND name='Inbox' COLLATE NOCASE
+                   AND is_archived<>0
+                """;
+            reactivate.Parameters.AddWithValue("$modified", DateTimeOffset.UtcNow.ToString("O"));
+            await reactivate.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using var exists = connection.CreateCommand();
+        exists.Transaction = transaction;
+        exists.CommandText = """
+            SELECT COUNT(*)
+              FROM folders
+             WHERE parent_id IS NULL
+               AND name='Inbox' COLLATE NOCASE
+            """;
+        if (Convert.ToInt32(await exists.ExecuteScalarAsync(cancellationToken)) > 0)
+            return;
+
+        await using var sort = connection.CreateCommand();
+        sort.Transaction = transaction;
+        sort.CommandText = """
+            SELECT COALESCE(MAX(sort_order),-1)+1
+              FROM folders
+             WHERE parent_id IS NULL
+            """;
+        var sortOrder = Convert.ToInt32(await sort.ExecuteScalarAsync(cancellationToken));
+
+        await InsertFolderAsync(
+            connection,
+            transaction,
+            Guid.NewGuid(),
+            null,
+            "Inbox",
+            sortOrder,
+            DateTimeOffset.UtcNow,
+            cancellationToken);
     }
 
     private static async Task InsertFolderAsync(
