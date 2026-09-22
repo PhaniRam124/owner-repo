@@ -54,6 +54,9 @@ public sealed class NoteService : INoteService
     public Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         _notes.GetAsync(id, cancellationToken);
 
+    public Task<IReadOnlyList<string>> GetTagsAsync(Guid id, CancellationToken cancellationToken) =>
+        _notes.GetTagsAsync(id, cancellationToken);
+
     public async Task UpdateAsync(UpdateNoteRequest request, CancellationToken cancellationToken)
     {
         await using var connection = _db.OpenConnection();
