@@ -170,37 +170,36 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Folders}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource NavButton}"
-                                            Command="{Binding DataContext.SelectFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding Id}"
-                                            ToolTip="Right-click for folder actions">
-                                        <Button.ContextMenu>
-                                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                                <MenuItem Header="New Subfolder"
-                                                          Tag="{Binding}"
-                                                          Click="CreateSubfolder_Click"/>
-                                                <MenuItem Header="Rename"
-                                                          Tag="{Binding}"
-                                                          Click="RenameFolder_Click"/>
-                                                <Separator/>
-                                                <MenuItem Header="Archive Folder"
-                                                          Tag="{Binding}"
-                                                          Click="ArchiveFolder_Click"/>
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="▸" Foreground="{StaticResource LavenderBrush}" Margin="0,0,6,0"/>
-                                            <TextBlock Text="{Binding Name}"/>
-                                        </StackPanel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <TreeView ItemsSource="{Binding FolderRoots}"
+                              BorderThickness="0"
+                              Background="Transparent"
+                              VerticalContentAlignment="Center"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                <Button Style="{StaticResource NavButton}"
+                                        Command="{Binding DataContext.SelectFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding Id}"
+                                        ToolTip="Right-click for folder actions">
+                                    <Button.ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                            <MenuItem Header="New Subfolder"
+                                                      Tag="{Binding Folder}"
+                                                      Click="CreateSubfolder_Click"/>
+                                            <MenuItem Header="Rename"
+                                                      Tag="{Binding Folder}"
+                                                      Click="RenameFolder_Click"/>
+                                            <Separator/>
+                                            <MenuItem Header="Archive Folder"
+                                                      Tag="{Binding Folder}"
+                                                      Click="ArchiveFolder_Click"/>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </Button>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
                 </DockPanel>
             </Border>
 
