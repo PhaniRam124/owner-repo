@@ -111,7 +111,25 @@
         <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource SurfaceBrush}">
             <StatusBarItem><TextBlock Text="{Binding StatusText}"/></StatusBarItem>
             <Separator/>
-            <StatusBarItem><TextBlock Text="Local database"/></StatusBarItem>
+            <StatusBarItem><TextBlock Text="Database: Connected"/></StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Notes: "/>
+                    <Run Text="{Binding Dashboard.TotalNotes}"/>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem><TextBlock Text="Autosave: On"/></StatusBarItem>
+            <Separator/>
+            <StatusBarItem><TextBlock Text="{Binding Editor.SaveStatus}"/></StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Backup: "/>
+                    <Run Text="{Binding Dashboard.BackupStatus}"/>
+                </TextBlock>
+            </StatusBarItem>
         </StatusBar>
 
         <Grid>
