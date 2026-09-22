@@ -23,24 +23,27 @@
                         <TextBlock Text="Total Notes" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
                 </Button>
-                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowCreatedTodayCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
                         <TextBlock Text="{Binding CreatedToday}" FontSize="25" FontWeight="Bold"/>
                         <TextBlock Text="Created Today" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
-                </Border>
-                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowCreatedThisWeekCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
                         <TextBlock Text="{Binding CreatedThisWeek}" FontSize="25" FontWeight="Bold"/>
                         <TextBlock Text="Created This Week" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
-                </Border>
-                <Border Width="170" Height="88" Margin="4" Style="{StaticResource CardBorder}">
+                </Button>
+                <Button Width="170" Height="88" Margin="4"
+                        Command="{Binding DataContext.ShowModifiedTodayCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
                         <TextBlock Text="{Binding UpdatedToday}" FontSize="25" FontWeight="Bold"/>
                         <TextBlock Text="Modified Today" Foreground="{StaticResource MutedBrush}"/>
                     </StackPanel>
-                </Border>
+                </Button>
                 <Button Width="170" Height="88" Margin="4"
                         Command="{Binding DataContext.ShowFavoritesCommand, RelativeSource={RelativeSource AncestorType=Window}}">
                     <StackPanel>
