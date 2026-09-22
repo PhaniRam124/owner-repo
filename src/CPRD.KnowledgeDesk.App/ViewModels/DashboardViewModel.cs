@@ -27,6 +27,8 @@ public sealed class DashboardViewModel : ObservableObject
     public ObservableCollection<DashboardItem> RecentlyImported { get; } = new();
     public ObservableCollection<DashboardItem> Favorites { get; } = new();
     public ObservableCollection<DashboardItem> RecentlyModified { get; } = new();
+    public ObservableCollection<DashboardFolderSummary> FolderSummary { get; } = new();
+    public ObservableCollection<DashboardTrendPoint> CreatedOverTime { get; } = new();
 
     public int TotalNotes { get => _totalNotes; private set => SetProperty(ref _totalNotes, value); }
     public int FolderCount { get => _folderCount; private set => SetProperty(ref _folderCount, value); }
@@ -59,6 +61,8 @@ public sealed class DashboardViewModel : ObservableObject
         Replace(RecentlyImported, snapshot.RecentlyImported);
         Replace(Favorites, snapshot.Favorites);
         Replace(RecentlyModified, snapshot.RecentlyModified);
+        Replace(FolderSummary, snapshot.FolderSummary);
+        Replace(CreatedOverTime, snapshot.CreatedOverTime);
     }
 
     private static void Replace<T>(ObservableCollection<T> target, IEnumerable<T> values)
