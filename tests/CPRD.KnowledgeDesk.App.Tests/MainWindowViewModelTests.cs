@@ -109,6 +109,28 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(string.Empty, vm.EmptyStateText);
     }
 
+    [Fact]
+    public async Task Archive_navigation_queries_archived_notes_and_returns_to_editor_workspace()
+    {
+        var folderId = Guid.NewGuid();
+        var search = new FakeSearchService();
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)),
+            new FakeNoteService(),
+            new FakeTagService(),
+            search,
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+        await vm.ShowArchivedCommand.ExecuteAsync(null);
+
+        Assert.NotNull(search.LastQuery);
+        Assert.True(search.LastQuery!.IncludeArchived);
+        Assert.Equal(0, vm.SelectedWorkspaceIndex);
+        Assert.Contains("Archive", vm.StatusText, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class FakeNoteService : INoteService
     {
         public Guid? LastRequestedFolderId { get; private set; }
