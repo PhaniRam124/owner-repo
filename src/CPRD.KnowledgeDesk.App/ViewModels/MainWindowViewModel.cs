@@ -74,6 +74,8 @@ public sealed class MainWindowViewModel : ObservableObject
         ShowRecentCommand = new AsyncRelayCommand(() => LoadNavigationAsync("Recent", false, false));
         ShowArchivedCommand = new AsyncRelayCommand(LoadArchivedAsync);
         CreateNewNoteCommand = new AsyncRelayCommand(CreateNewNoteAsync);
+        ArchiveCurrentNoteCommand = new AsyncRelayCommand(ArchiveCurrentNoteAsync);
+        MoveCurrentNoteToTrashCommand = new AsyncRelayCommand(MoveCurrentNoteToTrashAsync);
         CloseWorkspaceNoteCommand = new AsyncRelayCommand<Guid>(CloseWorkspaceNoteAsync);
         CloseActiveWorkspaceCommand = new AsyncRelayCommand(CloseActiveWorkspaceAsync, () => Editor.CurrentNote is not null);
     }
@@ -101,6 +103,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public IAsyncRelayCommand ShowRecentCommand { get; }
     public IAsyncRelayCommand ShowArchivedCommand { get; }
     public IAsyncRelayCommand CreateNewNoteCommand { get; }
+    public IAsyncRelayCommand ArchiveCurrentNoteCommand { get; }
+    public IAsyncRelayCommand MoveCurrentNoteToTrashCommand { get; }
     public AsyncRelayCommand<Guid> CloseWorkspaceNoteCommand { get; }
     public IAsyncRelayCommand CloseActiveWorkspaceCommand { get; }
 
@@ -215,6 +219,56 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             StatusText = $"Unable to create note: {ex.Message}";
         }
+    }
+
+    private async Task ArchiveCurrentNoteAsync()
+    {
+        var note = Editor.CurrentNote;
+        if (note is null)
+        {
+            StatusText = "Select a note to archive.";
+            return;
+        }
+
+        await Editor.FlushAsync(true, CancellationToken.None);
+        await _notes.ArchiveAsync(note.Id, CancellationToken.None);
+
+        RemoveNoteFromVisibleCollections(note.Id);
+        await CloseWorkspaceNoteAsync(note.Id);
+        await Dashboard.RefreshAsync();
+
+        StatusText = "Note archived.";
+    }
+
+    private async Task MoveCurrentNoteToTrashAsync()
+    {
+        var note = Editor.CurrentNote;
+        if (note is null)
+        {
+            StatusText = "Select a note to move to Trash.";
+            return;
+        }
+
+        await Editor.FlushAsync(true, CancellationToken.None);
+        await _notes.MoveToTrashAsync(note.Id, CancellationToken.None);
+
+        RemoveNoteFromVisibleCollections(note.Id);
+        await CloseWorkspaceNoteAsync(note.Id);
+        await Trash.RefreshAsync();
+        await Dashboard.RefreshAsync();
+
+        StatusText = "Note moved to Trash.";
+    }
+
+    private void RemoveNoteFromVisibleCollections(Guid noteId)
+    {
+        var note = Notes.FirstOrDefault(item => item.Id == noteId);
+        if (note is not null)
+            Notes.Remove(note);
+
+        var hit = SearchResults.FirstOrDefault(item => item.NoteId == noteId);
+        if (hit is not null)
+            SearchResults.Remove(hit);
     }
 
     private async Task SelectFolderAsync(Guid folderId)
