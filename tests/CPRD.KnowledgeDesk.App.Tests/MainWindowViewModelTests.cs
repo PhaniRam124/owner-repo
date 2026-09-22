@@ -138,6 +138,43 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task Note_sorting_reorders_visible_folder_notes()
+    {
+        var folderId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var notes = new FakeNoteService
+        {
+            NotesToReturn = new[]
+            {
+                new Note(
+                    Guid.NewGuid(), "Zulu", string.Empty, "z body", folderId, "Standard Note",
+                    false, false, false, now.AddDays(-2), now.AddMinutes(-10),
+                    null, null, null, null, "{}"),
+                new Note(
+                    Guid.NewGuid(), "Alpha", string.Empty, "a body", folderId, "Standard Note",
+                    false, false, false, now.AddDays(-1), now,
+                    null, null, null, null, "{}")
+            }
+        };
+
+        var vm = new MainWindowViewModel(
+            new FakeFolderService(new Folder(
+                folderId, null, "General", 0, false, now, now)),
+            notes,
+            new FakeTagService(),
+            new FakeSearchService(),
+            new FakeDashboardService());
+
+        await vm.InitializeAsync();
+
+        vm.SelectedNoteSort = "Title A-Z";
+        Assert.Equal(new[] { "Alpha", "Zulu" }, vm.Notes.Select(note => note.Title));
+
+        vm.SelectedNoteSort = "Oldest";
+        Assert.Equal(new[] { "Zulu", "Alpha" }, vm.Notes.Select(note => note.Title));
+    }
+
+    [Fact]
     public async Task Archive_navigation_queries_archived_notes_and_returns_to_editor_workspace()
     {
         var folderId = Guid.NewGuid();
@@ -275,6 +312,7 @@ public sealed class MainWindowViewModelTests
         public Guid? LastArchivedId { get; private set; }
         public Guid? LastTrashedId { get; private set; }
         public Note? NoteToReturn { get; set; }
+        public IReadOnlyList<Note> NotesToReturn { get; set; } = Array.Empty<Note>();
         public Task<Note> CreateAsync(NewNoteRequest request, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
         public Task<Note?> GetAsync(Guid id, CancellationToken cancellationToken) =>
@@ -284,7 +322,7 @@ public sealed class MainWindowViewModelTests
         public Task<IReadOnlyList<Note>> ListByFolderAsync(Guid folderId, CancellationToken cancellationToken)
         {
             LastRequestedFolderId = folderId;
-            return Task.FromResult<IReadOnlyList<Note>>(Array.Empty<Note>());
+            return Task.FromResult(NotesToReturn);
         }
         public Task MarkOpenedAsync(Guid id, DateTimeOffset openedAtUtc, CancellationToken cancellationToken) =>
             Task.CompletedTask;
