@@ -135,6 +135,7 @@
                         <Button Style="{StaticResource NavButton}" Content="★  Favorites" Command="{Binding ShowFavoritesCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="●  Pinned" Command="{Binding ShowPinnedCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="◷  Recent" Command="{Binding ShowRecentCommand}"/>
+                        <Button Style="{StaticResource NavButton}" Content="▣  Archive" Command="{Binding ShowArchivedCommand}"/>
                         <Button Style="{StaticResource NavButton}" Content="♲  Trash" Command="{Binding ShowTrashCommand}"/>
                         <Separator Margin="0,8"/>
                         <TextBlock Text="FOLDERS" Foreground="{StaticResource MutedBrush}"
