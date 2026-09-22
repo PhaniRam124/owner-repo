@@ -19,6 +19,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _globalSearchText = string.Empty;
     private string _statusText = "Ready";
     private string _emptyStateText = string.Empty;
+    private string _selectedNoteSort = "Recently Modified";
     private int _selectedWorkspaceIndex;
 
     public MainWindowViewModel(
@@ -88,6 +89,16 @@ public sealed class MainWindowViewModel : ObservableObject
     public ObservableCollection<Note> WorkspaceNotes { get; } = new();
     public ObservableCollection<string> RecentSearches { get; } = new();
 
+    public IReadOnlyList<string> NoteSortOptions { get; } = new[]
+    {
+        "Recently Modified",
+        "Newest",
+        "Oldest",
+        "Title A-Z",
+        "Title Z-A",
+        "Folder"
+    };
+
     public DashboardViewModel Dashboard { get; }
     public EditorViewModel Editor { get; }
     public TrashViewModel Trash { get; }
@@ -138,6 +149,16 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _selectedWorkspaceIndex;
         set => SetProperty(ref _selectedWorkspaceIndex, Math.Clamp(value, 0, 2));
+    }
+
+    public string SelectedNoteSort
+    {
+        get => _selectedNoteSort;
+        set
+        {
+            if (SetProperty(ref _selectedNoteSort, value))
+                ApplyNoteSort();
+        }
     }
 
     public async Task InitializeAsync()
@@ -256,6 +277,7 @@ public sealed class MainWindowViewModel : ObservableObject
             if (existing is not null)
                 Notes.Remove(existing);
             Notes.Insert(0, note);
+            ApplyNoteSort();
 
             _workspace.Open(note.Id);
             var openExisting = WorkspaceNotes.FirstOrDefault(item => item.Id == note.Id);
@@ -340,6 +362,7 @@ public sealed class MainWindowViewModel : ObservableObject
             Notes.Add(note);
         SearchResults.Clear();
         EmptyStateText = string.Empty;
+        ApplyNoteSort();
         StatusText = $"{Notes.Count} note(s)";
     }
 
@@ -425,6 +448,7 @@ public sealed class MainWindowViewModel : ObservableObject
             SearchResults.Add(hit);
 
         EmptyStateText = SearchResults.Count == 0 ? $"No notes found in {label}." : string.Empty;
+        ApplyNoteSort();
         StatusText = $"{label}: {SearchResults.Count} note(s)";
     }
 
@@ -457,6 +481,7 @@ public sealed class MainWindowViewModel : ObservableObject
         }
 
         EmptyStateText = SearchResults.Count == 0 ? "Archive is empty." : string.Empty;
+        ApplyNoteSort();
         StatusText = $"Archive: {SearchResults.Count} note(s)";
     }
 
@@ -499,6 +524,7 @@ public sealed class MainWindowViewModel : ObservableObject
         EmptyStateText = SearchResults.Count == 0
             ? "No notes found matching your search."
             : string.Empty;
+        ApplyNoteSort();
         StatusText = $"{SearchResults.Count} result(s)";
     }
 
@@ -524,6 +550,48 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             // Save status remains authoritative; dashboard can be refreshed manually if needed.
         }
+    }
+
+    private void ApplyNoteSort()
+    {
+        if (Notes.Count > 1)
+        {
+            IEnumerable<Note> orderedNotes = SelectedNoteSort switch
+            {
+                "Newest" => Notes.OrderByDescending(note => note.CreatedAtUtc),
+                "Oldest" => Notes.OrderBy(note => note.CreatedAtUtc),
+                "Title A-Z" => Notes.OrderBy(note => note.Title, StringComparer.OrdinalIgnoreCase),
+                "Title Z-A" => Notes.OrderByDescending(note => note.Title, StringComparer.OrdinalIgnoreCase),
+                _ => Notes.OrderByDescending(note => note.ModifiedAtUtc)
+            };
+
+            ReplaceCollection(Notes, orderedNotes.ToArray());
+        }
+
+        if (SearchResults.Count > 1)
+        {
+            IEnumerable<SearchHit> orderedHits = SelectedNoteSort switch
+            {
+                "Oldest" => SearchResults.OrderBy(hit => hit.ModifiedAtUtc),
+                "Title A-Z" => SearchResults.OrderBy(hit => hit.Title, StringComparer.OrdinalIgnoreCase),
+                "Title Z-A" => SearchResults.OrderByDescending(hit => hit.Title, StringComparer.OrdinalIgnoreCase),
+                "Folder" => SearchResults
+                    .OrderBy(hit => hit.FolderPath, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(hit => hit.Title, StringComparer.OrdinalIgnoreCase),
+                _ => SearchResults.OrderByDescending(hit => hit.ModifiedAtUtc)
+            };
+
+            ReplaceCollection(SearchResults, orderedHits.ToArray());
+        }
+    }
+
+    private static void ReplaceCollection<T>(
+        ObservableCollection<T> collection,
+        IReadOnlyList<T> items)
+    {
+        collection.Clear();
+        foreach (var item in items)
+            collection.Add(item);
     }
 
     private async Task RefreshDashboardAsync()
