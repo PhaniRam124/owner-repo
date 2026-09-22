@@ -193,6 +193,9 @@
                                             <MenuItem Header="Archive Folder"
                                                       Tag="{Binding Folder}"
                                                       Click="ArchiveFolder_Click"/>
+                                            <MenuItem Header="Delete Folder..."
+                                                      Tag="{Binding Folder}"
+                                                      Click="DeleteFolder_Click"/>
                                         </ContextMenu>
                                     </Button.ContextMenu>
                                     <TextBlock Text="{Binding Name}"/>
