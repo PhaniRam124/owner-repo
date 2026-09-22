@@ -39,7 +39,7 @@ public sealed class FolderDeletionTests
         var allFolders = await env.Folders.GetTreeAsync(default);
         Assert.DoesNotContain(allFolders, folder => folder.Id == root.Id);
 
-        var preservedChild = Assert.Single(allFolders.Where(folder => folder.Id == child.Id));
+        var preservedChild = Assert.Single(allFolders, folder => folder.Id == child.Id);
         Assert.Null(preservedChild.ParentId);
     }
 
