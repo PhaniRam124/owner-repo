@@ -84,7 +84,7 @@ public sealed class SearchService : ISearchService
                 reader.GetInt64(9) != 0));
         }
 
-        if (query.Text.Any(char.IsDigit))
+        if ((query.Text ?? string.Empty).Any(char.IsDigit))
         {
             foreach (var dateHit in await SearchDateTextAsync(query, cancellationToken))
             {
