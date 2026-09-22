@@ -83,9 +83,91 @@ public sealed class SearchService : ISearchService
                 reader.GetDouble(8),
                 reader.GetInt64(9) != 0));
         }
-        return result;
+
+        if (query.Text.Any(char.IsDigit))
+        {
+            foreach (var dateHit in await SearchDateTextAsync(query, cancellationToken))
+            {
+                if (result.All(existing => existing.NoteId != dateHit.NoteId))
+                    result.Add(dateHit);
+            }
+        }
+
+        return result
+            .OrderBy(hit => hit.Rank)
+            .ThenByDescending(hit => hit.ModifiedAtUtc)
+            .Take(Math.Clamp(query.Limit, 1, 200))
+            .ToArray();
     }
 
+    private async Task<IReadOnlyList<SearchHit>> SearchDateTextAsync(
+        SearchQuery query,
+        CancellationToken cancellationToken)
+    {
+        var dateText = (query.Text ?? string.Empty).Trim();
+        if (dateText.Length == 0)
+            return Array.Empty<SearchHit>();
+
+        var tagCondition = BuildTagCondition(query.TagIds.Count);
+        var sql = $"""
+            WITH RECURSIVE subtree(id) AS (
+              SELECT CAST($folderId AS TEXT) WHERE $folderId IS NOT NULL
+              UNION ALL
+              SELECT f.id FROM folders f JOIN subtree s ON f.parent_id=s.id
+            )
+            SELECT n.id,
+                   n.title,
+                   'Created ' || n.created_at_utc || ' • Modified ' || n.modified_at_utc,
+                   COALESCE(fts.folder_path,''),
+                   n.note_type,
+                   n.is_favorite,
+                   n.is_pinned,
+                   n.modified_at_utc,
+                   1000.0,
+                   n.is_archived
+              FROM notes n
+              LEFT JOIN notes_fts fts ON fts.note_id=n.id
+             WHERE n.deleted_at_utc IS NULL
+               AND ($includeArchived=1 OR n.is_archived=0)
+               AND ($folderId IS NULL OR n.folder_id IN (SELECT id FROM subtree))
+               AND ($noteType IS NULL OR n.note_type=$noteType)
+               AND ($modifiedFrom IS NULL OR n.modified_at_utc >= $modifiedFrom)
+               AND ($modifiedTo IS NULL OR n.modified_at_utc <= $modifiedTo)
+               AND ($favoritesOnly=0 OR n.is_favorite=1)
+               AND ($pinnedOnly=0 OR n.is_pinned=1)
+               AND (n.created_at_utc LIKE $dateText OR n.modified_at_utc LIKE $dateText)
+               {tagCondition}
+             ORDER BY n.modified_at_utc DESC
+             LIMIT $limit
+            """;
+
+        var result = new List<SearchHit>();
+        await using var connection = _db.OpenConnection();
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        BindCommon(command, query);
+        command.Parameters.AddWithValue("$dateText", "%" + dateText + "%");
+        BindTags(command, query.TagIds);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new SearchHit(
+                Guid.Parse(reader.GetString(0)),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetInt64(5) != 0,
+                reader.GetInt64(6) != 0,
+                DateTimeOffset.Parse(reader.GetString(7)),
+                reader.GetDouble(8),
+                reader.GetInt64(9) != 0));
+        }
+
+        return result;
+    }
     private async Task<IReadOnlyList<SearchHit>> SearchWithoutTextAsync(SearchQuery query, CancellationToken cancellationToken)
     {
         var tagCondition = BuildTagCondition(query.TagIds.Count);
