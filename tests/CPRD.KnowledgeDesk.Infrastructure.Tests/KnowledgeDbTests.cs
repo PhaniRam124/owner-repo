@@ -27,6 +27,31 @@ public sealed class KnowledgeDbTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ensures_root_inbox_folder_idempotently()
+    {
+        using var temp = new TempDirectory();
+        var paths = new TestAppPaths(temp.Path);
+        var db = new KnowledgeDb(paths);
+
+        await db.InitializeAsync(CancellationToken.None);
+        await db.InitializeAsync(CancellationToken.None);
+
+        await using var connection = db.OpenConnection();
+        await connection.OpenAsync();
+
+        var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+              FROM folders
+             WHERE parent_id IS NULL
+               AND name='Inbox' COLLATE NOCASE
+               AND is_archived=0
+            """;
+
+        Assert.Equal(1, Convert.ToInt32(await command.ExecuteScalarAsync()));
+    }
+
+    [Fact]
     public async Task InitializeAsync_enables_wal_and_busy_timeout()
     {
         using var temp = new TempDirectory();
