@@ -7,6 +7,9 @@ public partial class QuickCaptureWindow : Window
 {
     private readonly QuickCaptureViewModel _viewModel;
 
+    public Guid? SavedNoteId { get; private set; }
+    public bool OpenAfterSave { get; private set; }
+
     public QuickCaptureWindow(QuickCaptureViewModel viewModel)
     {
         InitializeComponent();
@@ -20,8 +23,18 @@ public partial class QuickCaptureWindow : Window
 
     private void OnSaved(object? sender, Guid noteId)
     {
+        SavedNoteId = noteId;
         DialogResult = true;
         Close();
+    }
+
+    private async void SaveAndOpen_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.SaveCommand.CanExecute(null))
+            return;
+
+        OpenAfterSave = true;
+        await _viewModel.SaveCommand.ExecuteAsync(null);
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
