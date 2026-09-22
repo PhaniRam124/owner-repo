@@ -98,7 +98,8 @@ public sealed class QuickCaptureViewModel : ObservableObject
         foreach (var folder in await _folders.GetTreeAsync(CancellationToken.None))
             Folders.Add(folder);
 
-        SelectedFolder = Folders.FirstOrDefault(folder => folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))
+        SelectedFolder = Folders.FirstOrDefault(folder => folder.Name.Equals("Inbox", StringComparison.OrdinalIgnoreCase))
+            ?? Folders.FirstOrDefault(folder => folder.Name.Equals("General", StringComparison.OrdinalIgnoreCase))
             ?? Folders.FirstOrDefault();
     }
 
