@@ -169,6 +169,7 @@ public sealed class NewNoteWorkflowTests
         public Task MoveAsync(Guid folderId, Guid? newParentId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task ArchiveAsync(Guid folderId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task RestoreAsync(Guid folderId, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task DeleteAsync(Guid folderId, Guid destinationFolderId, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class FakeTagService : ITagService
