@@ -95,6 +95,8 @@ public partial class MainWindow : Window
         if (!saved)
             return;
 
+        _viewModel.RefreshDashboardCommand.Execute(null);
+
         if (window.OpenAfterSave && window.SavedNoteId is Guid noteId)
         {
             _viewModel.SelectNoteCommand.Execute(noteId);
