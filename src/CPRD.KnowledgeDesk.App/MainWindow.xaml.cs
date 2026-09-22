@@ -177,6 +177,141 @@ public partial class MainWindow : Window
         });
     }
 
+    private async void DeleteFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem menu ||
+            menu.Tag is not CPRD.KnowledgeDesk.Core.Models.Folder folder)
+            return;
+
+        var excluded = new HashSet<Guid> { folder.Id };
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (var item in _viewModel.Folders)
+            {
+                if (item.ParentId is Guid parentId &&
+                    excluded.Contains(parentId) &&
+                    excluded.Add(item.Id))
+                    changed = true;
+            }
+        }
+
+        var destinations = _viewModel.Folders
+            .Where(item => !excluded.Contains(item.Id) && !item.IsArchived)
+            .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (destinations.Length == 0)
+        {
+            MessageBox.Show(
+                "Create another folder before deleting this folder so its notes have a safe destination.",
+                "Delete Folder",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        var destination = PromptForFolderDestination(folder, destinations);
+        if (destination is null)
+            return;
+
+        var confirm = MessageBox.Show(
+            $"Delete folder '{folder.Name}'?\n\n" +
+            $"Notes directly in this folder will be moved to '{destination.Name}'.\n" +
+            "Child folders will be preserved and moved up one level.\n\n" +
+            "No notes will be permanently deleted.",
+            "Confirm Safe Folder Delete",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes)
+            return;
+
+        await RunMaintenanceAsync("Delete Folder", async () =>
+        {
+            await _viewModel.DeleteFolderAsync(folder.Id, destination.Id);
+        });
+    }
+
+    private CPRD.KnowledgeDesk.Core.Models.Folder? PromptForFolderDestination(
+        CPRD.KnowledgeDesk.Core.Models.Folder folder,
+        IReadOnlyList<CPRD.KnowledgeDesk.Core.Models.Folder> destinations)
+    {
+        var dialog = new Window
+        {
+            Title = "Move Notes Before Folder Delete",
+            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            ShowInTaskbar = false,
+            Background = (System.Windows.Media.Brush)FindResource("CanvasBrush")
+        };
+
+        var panel = new System.Windows.Controls.StackPanel
+        {
+            Margin = new Thickness(18),
+            MinWidth = 420
+        };
+
+        panel.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = $"Choose where notes from '{folder.Name}' should be moved:",
+            FontWeight = FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
+        var combo = new System.Windows.Controls.ComboBox
+        {
+            ItemsSource = destinations,
+            DisplayMemberPath = "Name",
+            MinWidth = 380,
+            Margin = new Thickness(0, 0, 0, 14)
+        };
+
+        combo.SelectedItem =
+            destinations.FirstOrDefault(item =>
+                item.Name.Equals("Inbox", StringComparison.OrdinalIgnoreCase))
+            ?? destinations.FirstOrDefault(item =>
+                item.Name.Equals("General", StringComparison.OrdinalIgnoreCase))
+            ?? destinations[0];
+
+        panel.Children.Add(combo);
+
+        var buttons = new System.Windows.Controls.StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+
+        var cancel = new System.Windows.Controls.Button
+        {
+            Content = "Cancel",
+            MinWidth = 90,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        var ok = new System.Windows.Controls.Button
+        {
+            Content = "Move Notes & Delete Folder",
+            MinWidth = 170,
+            IsDefault = true
+        };
+
+        cancel.Click += (_, _) => dialog.DialogResult = false;
+        ok.Click += (_, _) => dialog.DialogResult = combo.SelectedItem is not null;
+
+        buttons.Children.Add(cancel);
+        buttons.Children.Add(ok);
+        panel.Children.Add(buttons);
+        dialog.Content = panel;
+
+        return dialog.ShowDialog() == true
+            ? combo.SelectedItem as CPRD.KnowledgeDesk.Core.Models.Folder
+            : null;
+    }
+
     private string? PromptForText(string title, string prompt, string initialValue)
     {
         var owner = this;
