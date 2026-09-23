@@ -57,6 +57,87 @@ LEFT JOIN status_options s ON s.id=t.status_option_id ORDER BY t.departure_date,
     public long SaveRoute(RouteItem x){using var c=Open();var from=GetCities(false).First(z=>z.Id==x.FromCityId);var to=GetCities(false).First(z=>z.Id==x.ToCityId);var code=$"{from.Iata}-{to.Iata}";var label=$"{from.Iata} → {to.Iata}";using var cmd=c.CreateCommand();if(x.Id==0)cmd.CommandText="INSERT INTO routes(from_city_id,to_city_id,route_code,route_label,is_active) VALUES($f,$t,$c,$l,$a); SELECT last_insert_rowid();";else{cmd.CommandText="UPDATE routes SET from_city_id=$f,to_city_id=$t,route_code=$c,route_label=$l,is_active=$a WHERE id=$id; SELECT $id";cmd.Parameters.AddWithValue("$id",x.Id);}cmd.Parameters.AddWithValue("$f",x.FromCityId);cmd.Parameters.AddWithValue("$t",x.ToCityId);cmd.Parameters.AddWithValue("$c",code);cmd.Parameters.AddWithValue("$l",label);cmd.Parameters.AddWithValue("$a",x.IsActive?1:0);return (long)(cmd.ExecuteScalar()??0L);}
     public long SaveFlight(FlightItem x){using var c=Open();var route=GetRoutes(false).First(z=>z.Id==x.RouteId);var display=$"{x.FlightNo.Trim()} | {route.RouteCode} | {x.DepartureTime}-{x.ArrivalTime}";using var cmd=c.CreateCommand();if(x.Id==0)cmd.CommandText="INSERT INTO flights(airline,flight_no,route_id,departure_time,arrival_time,stops,via_iata,display_value,is_active) VALUES($a,$f,$r,$d,$ar,$s,$v,$dv,$act); SELECT last_insert_rowid();";else{cmd.CommandText="UPDATE flights SET airline=$a,flight_no=$f,route_id=$r,departure_time=$d,arrival_time=$ar,stops=$s,via_iata=$v,display_value=$dv,is_active=$act WHERE id=$id; SELECT $id";cmd.Parameters.AddWithValue("$id",x.Id);}cmd.Parameters.AddWithValue("$a",x.Airline.Trim());cmd.Parameters.AddWithValue("$f",x.FlightNo.Trim());cmd.Parameters.AddWithValue("$r",x.RouteId);cmd.Parameters.AddWithValue("$d",x.DepartureTime);cmd.Parameters.AddWithValue("$ar",x.ArrivalTime);cmd.Parameters.AddWithValue("$s",x.Stops);cmd.Parameters.AddWithValue("$v",(object?)x.ViaIata??DBNull.Value);cmd.Parameters.AddWithValue("$dv",display);cmd.Parameters.AddWithValue("$act",x.IsActive?1:0);return (long)(cmd.ExecuteScalar()??0L);}
 
+
+    public void DeleteTraveller(long id)
+    {
+        using var c=Open();
+        using(var check=c.CreateCommand())
+        {
+            check.CommandText="SELECT COUNT(*) FROM trip_travellers WHERE traveller_id=$id";
+            check.Parameters.AddWithValue("$id",id);
+            if(Convert.ToInt64(check.ExecuteScalar())>0)
+                throw new InvalidOperationException("This traveller is already used in one or more trips. Set the traveller to Inactive instead of deleting.");
+        }
+        using var cmd=c.CreateCommand();
+        cmd.CommandText="DELETE FROM travellers WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id",id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteCity(long id)
+    {
+        using var c=Open();
+        using(var check=c.CreateCommand())
+        {
+            check.CommandText="SELECT COUNT(*) FROM routes WHERE from_city_id=$id OR to_city_id=$id";
+            check.Parameters.AddWithValue("$id",id);
+            if(Convert.ToInt64(check.ExecuteScalar())>0)
+                throw new InvalidOperationException("This city is used by one or more routes. Delete or reassign those routes first, or set this city to Inactive.");
+        }
+        using var cmd=c.CreateCommand();
+        cmd.CommandText="DELETE FROM cities WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id",id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteRoute(long id)
+    {
+        using var c=Open();
+        using(var check=c.CreateCommand())
+        {
+            check.CommandText="SELECT (SELECT COUNT(*) FROM flights WHERE route_id=$id) + (SELECT COUNT(*) FROM trips WHERE route_id=$id)";
+            check.Parameters.AddWithValue("$id",id);
+            if(Convert.ToInt64(check.ExecuteScalar())>0)
+                throw new InvalidOperationException("This route is already used by flights or trips. Remove/reassign those records first, or set the route to Inactive.");
+        }
+        using var cmd=c.CreateCommand();
+        cmd.CommandText="DELETE FROM routes WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id",id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteFlight(long id)
+    {
+        using var c=Open();
+        using(var check=c.CreateCommand())
+        {
+            check.CommandText="SELECT COUNT(*) FROM trips WHERE onward_flight_id=$id OR return_flight_id=$id";
+            check.Parameters.AddWithValue("$id",id);
+            if(Convert.ToInt64(check.ExecuteScalar())>0)
+                throw new InvalidOperationException("This flight is already used in one or more trips. Set the flight to Inactive instead of deleting.");
+        }
+        using var cmd=c.CreateCommand();
+        cmd.CommandText="DELETE FROM flights WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id",id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public bool CityExists(string name,string iata,long excludeId=0)
+    {
+        using var c=Open(); using var cmd=c.CreateCommand();
+        cmd.CommandText="SELECT COUNT(*) FROM cities WHERE id<>$id AND (name=$n COLLATE NOCASE OR iata=$i COLLATE NOCASE)";
+        cmd.Parameters.AddWithValue("$id",excludeId); cmd.Parameters.AddWithValue("$n",name.Trim()); cmd.Parameters.AddWithValue("$i",iata.Trim());
+        return Convert.ToInt64(cmd.ExecuteScalar())>0;
+    }
+
+    public bool TravellerExists(string shortCode,long excludeId=0)
+    {
+        using var c=Open(); using var cmd=c.CreateCommand();
+        cmd.CommandText="SELECT COUNT(*) FROM travellers WHERE id<>$id AND short_code=$s COLLATE NOCASE";
+        cmd.Parameters.AddWithValue("$id",excludeId); cmd.Parameters.AddWithValue("$s",shortCode.Trim());
+        return Convert.ToInt64(cmd.ExecuteScalar())>0;
+    }
+
     public void Backup(string destination){File.Copy(_dbPath,destination,true);}
     public void ExportTripsCsv(string path)
     { var rows=GetTrips(); var sb=new StringBuilder(); sb.AppendLine("Trip ID,Departure,Return,Route,Travellers,Pax,Onward,Onward PNR,Seats,Return Flight,Return PNR,Seats,Hotel,Transport,Transport Details,Total Cost,Status,Next Action,Remarks"); static string E(string? s)=>"\""+(s??"").Replace("\"","\"\"")+"\""; foreach(var x in rows)sb.AppendLine(string.Join(',',E(x.TripCode),E(x.DepartureDate.ToString("dd-MMM-yyyy")),E(x.ReturnDate?.ToString("dd-MMM-yyyy")),E(x.RouteLabel),E(x.Travellers),x.Pax,E(x.OnwardFlight),E(x.OnwardPnr),E(x.OnwardSeats),E(x.ReturnFlight),E(x.ReturnPnr),E(x.ReturnSeats),E(x.Hotel),E(x.Transport),E(x.TransportDetails),x.TotalCost?.ToString("0.00",CultureInfo.InvariantCulture)??"",E(x.Status),E(x.NextAction),E(x.Remarks))); File.WriteAllText(path,sb.ToString(),Encoding.UTF8); }
