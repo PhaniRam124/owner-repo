@@ -60,3 +60,4 @@ jobs:
           name: DirectorFamilyTravelDesk_Portable_v1.0.1
           path: TravelDesk/publish/win-x64/**
           if-no-files-found: error
+# rebuilt after source repair
