@@ -45,19 +45,19 @@ jobs:
         shell: pwsh
         run: |
           Get-Item .\TravelDesk\publish\win-x64\DirectorFamilyTravelDesk.exe
-          Get-Item .\TravelDesk\Installer\output\DirectorFamilyTravelDesk_Setup_v1.0.1.exe
+          Get-Item .\TravelDesk\Installer\output\DirectorFamilyTravelDesk_Setup_v1.1.0.exe
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: DirectorFamilyTravelDesk_Setup_v1.0.1
-          path: TravelDesk/Installer/output/DirectorFamilyTravelDesk_Setup_v1.0.1.exe
+          name: DirectorFamilyTravelDesk_Setup_v1.1.0
+          path: TravelDesk/Installer/output/DirectorFamilyTravelDesk_Setup_v1.1.0.exe
           if-no-files-found: error
 
       - name: Upload portable build
         uses: actions/upload-artifact@v4
         with:
-          name: DirectorFamilyTravelDesk_Portable_v1.0.1
+          name: DirectorFamilyTravelDesk_Portable_v1.1.0
           path: TravelDesk/publish/win-x64/**
           if-no-files-found: error
 # rebuilt after source repair
