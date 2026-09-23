@@ -1,0 +1,62 @@
+name: Build Director Family Travel Desk
+
+on:
+  push:
+    branches:
+      - travel-desk-build
+    paths:
+      - 'TravelDesk/**'
+      - '.github/workflows/travel-desk-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore .\TravelDesk\DirectorFamilyTravelDesk.csproj
+
+      - name: Publish self-contained Windows x64
+        shell: pwsh
+        run: dotnet publish .\TravelDesk\DirectorFamilyTravelDesk.csproj -c Release -r win-x64 --self-contained true -o .\TravelDesk\publish\win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          & $iscc .\TravelDesk\Installer\DirectorFamilyTravelDesk.iss
+
+      - name: Verify output
+        shell: pwsh
+        run: |
+          Get-Item .\TravelDesk\publish\win-x64\DirectorFamilyTravelDesk.exe
+          Get-Item .\TravelDesk\Installer\output\DirectorFamilyTravelDesk_Setup_v1.0.1.exe
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: DirectorFamilyTravelDesk_Setup_v1.0.1
+          path: TravelDesk/Installer/output/DirectorFamilyTravelDesk_Setup_v1.0.1.exe
+          if-no-files-found: error
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: DirectorFamilyTravelDesk_Portable_v1.0.1
+          path: TravelDesk/publish/win-x64/**
+          if-no-files-found: error
