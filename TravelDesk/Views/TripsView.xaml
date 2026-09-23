@@ -1,5 +1,58 @@
-<UserControl x:Class="DirectorFamilyTravelDesk.Views.TripsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-<DockPanel><StackPanel><TextBlock Text="Trip Register" Style="{StaticResource SectionTitle}"/><TextBlock Text="Compact master list — one row per trip" Foreground="{StaticResource Muted}"/></StackPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Edit" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="Edit_Click"/><Button Content="Delete" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="Delete_Click"/><Button Content="+ New Trip" Style="{StaticResource PrimaryButton}" Click="New_Click"/></StackPanel></DockPanel>
-<Grid Grid.Row="1" Margin="0,16,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions><TextBox x:Name="SearchBox" ToolTip="Search trip, route, traveller, PNR" TextChanged="Filter_Changed"/><ComboBox Grid.Column="1" x:Name="StatusFilter" Margin="10,0,0,0" SelectionChanged="Filter_Changed"/></Grid>
-<DataGrid Grid.Row="2" x:Name="GridTrips" SelectionMode="Single"><DataGrid.Columns><DataGridTextColumn Header="Trip" Binding="{Binding TripCode}" Width="105"/><DataGridTextColumn Header="Departure" Binding="{Binding DepartureDate,StringFormat=dd-MMM-yy}" Width="95"/><DataGridTextColumn Header="Return" Binding="{Binding ReturnDate,StringFormat=dd-MMM-yy}" Width="95"/><DataGridTextColumn Header="Route" Binding="{Binding RouteLabel}" Width="120"/><DataGridTextColumn Header="Travellers" Binding="{Binding Travellers}" Width="*"/><DataGridTextColumn Header="Pax" Binding="{Binding Pax}" Width="55"/><DataGridTextColumn Header="Onward" Binding="{Binding OnwardFlight}" Width="230"/><DataGridTextColumn Header="PNR" Binding="{Binding OnwardPnr}" Width="85"/><DataGridTextColumn Header="Seat" Binding="{Binding OnwardSeats}" Width="80"/><DataGridTextColumn Header="Return" Binding="{Binding ReturnFlight}" Width="230"/><DataGridTextColumn Header="PNR" Binding="{Binding ReturnPnr}" Width="85"/><DataGridTextColumn Header="Seat" Binding="{Binding ReturnSeats}" Width="80"/><DataGridTextColumn Header="Transport" Binding="{Binding Transport}" Width="120"/><DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="140"/></DataGrid.Columns></DataGrid>
-</Grid></UserControl>
+<UserControl x:Class="DirectorFamilyTravelDesk.Views.TripsView"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Grid Margin="28">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <DockPanel>
+   <StackPanel>
+    <TextBlock Text="Trip Register" Style="{StaticResource SectionTitle}"/>
+    <TextBlock Text="Compact master list — select a trip to view booking details below" Foreground="{StaticResource Muted}" Margin="0,3,0,0"/>
+   </StackPanel>
+   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+    <Button Content="Edit" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="Edit_Click"/>
+    <Button Content="Delete" Style="{StaticResource DangerButton}" Margin="0,0,8,0" Click="Delete_Click"/>
+    <Button Content="+ New Trip" Style="{StaticResource PrimaryButton}" Click="New_Click"/>
+   </StackPanel>
+  </DockPanel>
+
+  <Grid Grid.Row="1" Margin="0,18,0,12">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
+   <TextBox x:Name="SearchBox" ToolTip="Search trip, route, traveller or PNR" TextChanged="Filter_Changed" MinHeight="38"/>
+   <ComboBox Grid.Column="1" x:Name="StatusFilter" Margin="10,0,0,0" SelectionChanged="Filter_Changed" MinHeight="38"/>
+  </Grid>
+
+  <DataGrid Grid.Row="2" x:Name="GridTrips" SelectionChanged="GridTrips_SelectionChanged" MouseDoubleClick="GridTrips_DoubleClick">
+   <DataGrid.Columns>
+    <DataGridTextColumn Header="Trip" Binding="{Binding TripCode}" Width="120"/>
+    <DataGridTextColumn Header="Departure" Binding="{Binding DepartureDate,StringFormat=dd-MMM-yyyy}" Width="115"/>
+    <DataGridTextColumn Header="Return" Binding="{Binding ReturnDate,StringFormat=dd-MMM-yyyy}" Width="115"/>
+    <DataGridTextColumn Header="Route" Binding="{Binding RouteLabel}" Width="135"/>
+    <DataGridTextColumn Header="Travellers" Binding="{Binding Travellers}" Width="*"/>
+    <DataGridTextColumn Header="Pax" Binding="{Binding Pax}" Width="60"/>
+    <DataGridTextColumn Header="Transport" Binding="{Binding Transport}" Width="130"/>
+    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="150"/>
+   </DataGrid.Columns>
+  </DataGrid>
+
+  <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,12,0,0" MinHeight="128">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="1.15*"/></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,18,0">
+     <TextBlock Text="ONWARD" Style="{StaticResource SmallLabel}"/>
+     <TextBlock x:Name="OnwardFlightText" Text="Select a trip" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,6" TextWrapping="Wrap"/>
+     <TextBlock x:Name="OnwardMetaText" Foreground="{StaticResource Muted}" TextWrapping="Wrap"/>
+    </StackPanel>
+    <StackPanel Grid.Column="1" Margin="0,0,18,0">
+     <TextBlock Text="RETURN" Style="{StaticResource SmallLabel}"/>
+     <TextBlock x:Name="ReturnFlightText" Text="—" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,6" TextWrapping="Wrap"/>
+     <TextBlock x:Name="ReturnMetaText" Foreground="{StaticResource Muted}" TextWrapping="Wrap"/>
+    </StackPanel>
+    <StackPanel Grid.Column="2">
+     <TextBlock Text="TRIP NOTES" Style="{StaticResource SmallLabel}"/>
+     <TextBlock x:Name="TripMetaText" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap"/>
+     <TextBlock x:Name="RemarksText" Foreground="{StaticResource Muted}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+    </StackPanel>
+   </Grid>
+  </Border>
+ </Grid>
+</UserControl>
