@@ -1,5 +1,5 @@
 #define MyAppName "Director Family Travel Desk"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "CPRD"
 #define MyAppExeName "DirectorFamilyTravelDesk.exe"
 
@@ -11,7 +11,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\Director Family Travel Desk
 DefaultGroupName={#MyAppName}
 OutputDir=output
-OutputBaseFilename=DirectorFamilyTravelDesk_Setup_v1.0.1
+OutputBaseFilename=DirectorFamilyTravelDesk_Setup_v1.1.0
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
