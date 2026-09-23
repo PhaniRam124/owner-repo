@@ -47,8 +47,8 @@ public partial class FlightsView : UserControl, IRefreshable
     private void Save_Click(object s, RoutedEventArgs e)
     {
         if(string.IsNullOrWhiteSpace(AirlineBox.Text) || string.IsNullOrWhiteSpace(FlightNoBox.Text) || RouteBox.SelectedValue is not long rid ||
-           !TimeSpan.TryParseExact(DepBox.Text,"hh\:mm",CultureInfo.InvariantCulture,out _) ||
-           !TimeSpan.TryParseExact(ArrBox.Text,"hh\:mm",CultureInfo.InvariantCulture,out _))
+           !TimeSpan.TryParseExact(DepBox.Text,@"hh\:mm",CultureInfo.InvariantCulture,out _) ||
+           !TimeSpan.TryParseExact(ArrBox.Text,@"hh\:mm",CultureInfo.InvariantCulture,out _))
         { MessageBox.Show("Enter Airline, Flight No, Route and valid HH:mm times.","Flights"); return; }
 
         int.TryParse(StopsBox.Text,out var stops);
