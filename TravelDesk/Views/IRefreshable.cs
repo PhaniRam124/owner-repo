@@ -1,0 +1,1 @@
+namespace DirectorFamilyTravelDesk.Views; public interface IRefreshable { void RefreshData(); }
