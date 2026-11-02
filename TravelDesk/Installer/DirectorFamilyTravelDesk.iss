@@ -1,17 +1,17 @@
-#define MyAppName "Director Family Travel Desk"
-#define MyAppVersion "1.1.0"
+#define MyAppName "Management Travel Tracker"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "CPRD"
-#define MyAppExeName "DirectorFamilyTravelDesk.exe"
+#define MyAppExeName "ManagementTravelTracker.exe"
 
 [Setup]
 AppId={{D6D1D4F7-4518-4B9C-93E1-1B72E71A7A71}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\Director Family Travel Desk
+DefaultDirName={autopf}\Management Travel Tracker
 DefaultGroupName={#MyAppName}
 OutputDir=output
-OutputBaseFilename=DirectorFamilyTravelDesk_Setup_v1.1.0
+OutputBaseFilename=ManagementTravelTracker_Setup_v1.2.0
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
