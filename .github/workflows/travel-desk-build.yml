@@ -44,20 +44,20 @@ jobs:
       - name: Verify output
         shell: pwsh
         run: |
-          Get-Item .\TravelDesk\publish\win-x64\DirectorFamilyTravelDesk.exe
-          Get-Item .\TravelDesk\Installer\output\DirectorFamilyTravelDesk_Setup_v1.1.0.exe
+          Get-Item .\TravelDesk\publish\win-x64\ManagementTravelTracker.exe
+          Get-Item .\TravelDesk\Installer\output\ManagementTravelTracker_Setup_v1.2.0.exe
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: DirectorFamilyTravelDesk_Setup_v1.1.0
-          path: TravelDesk/Installer/output/DirectorFamilyTravelDesk_Setup_v1.1.0.exe
+          name: ManagementTravelTracker_Setup_v1.2.0
+          path: TravelDesk/Installer/output/ManagementTravelTracker_Setup_v1.2.0.exe
           if-no-files-found: error
 
       - name: Upload portable build
         uses: actions/upload-artifact@v4
         with:
-          name: DirectorFamilyTravelDesk_Portable_v1.1.0
+          name: ManagementTravelTracker_Portable_v1.2.0
           path: TravelDesk/publish/win-x64/**
           if-no-files-found: error
 # rebuilt after source repair
