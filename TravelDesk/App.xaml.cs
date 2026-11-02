@@ -12,15 +12,22 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        DataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CPRD", "DirectorFamilyTravelDesk");
+        var local=Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        DataDirectory=Path.Combine(local,"CPRD","ManagementTravelTracker");
         Directory.CreateDirectory(DataDirectory);
-        DatabasePath = Path.Combine(DataDirectory, "travel.db");
-        if (!File.Exists(DatabasePath))
+        DatabasePath=Path.Combine(DataDirectory,"travel.db");
+
+        var legacyDb=Path.Combine(local,"CPRD","DirectorFamilyTravelDesk","travel.db");
+        if(!File.Exists(DatabasePath) && File.Exists(legacyDb))
+            File.Copy(legacyDb,DatabasePath,true);
+
+        if(!File.Exists(DatabasePath))
         {
-            var seedSql = Path.Combine(AppContext.BaseDirectory, "Seed", "seed.sql");
-            SeedDatabase.Create(DatabasePath, seedSql);
+            var seedSql=Path.Combine(AppContext.BaseDirectory,"Seed","seed.sql");
+            SeedDatabase.Create(DatabasePath,seedSql);
         }
-        Repository = new TravelRepository(DatabasePath);
+
+        Repository=new TravelRepository(DatabasePath);
         Repository.Initialize();
         base.OnStartup(e);
     }
