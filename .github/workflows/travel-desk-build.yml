@@ -1,4 +1,4 @@
-name: Build Director Family Travel Desk
+name: Build Management Travel Tracker
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
       - 'TravelDesk/**'
       - '.github/workflows/travel-desk-build.yml'
   workflow_dispatch:
+
+concurrency:
+  group: management-travel-tracker-build
+  cancel-in-progress: true
 
 jobs:
   build-windows:
