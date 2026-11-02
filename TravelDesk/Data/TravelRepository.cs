@@ -6,14 +6,14 @@ using System.Text;
 
 namespace DirectorFamilyTravelDesk.Data;
 
-public sealed class TravelRepository
+public sealed partial class TravelRepository
 {
     private readonly string _dbPath;
     private readonly string _cs;
     public string DatabasePath => _dbPath;
     public TravelRepository(string dbPath) { _dbPath=dbPath; _cs=$"Data Source={dbPath};Cache=Shared;Mode=ReadWriteCreate"; }
     private SqliteConnection Open() { var c=new SqliteConnection(_cs); c.Open(); using var cmd=c.CreateCommand(); cmd.CommandText="PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000;"; cmd.ExecuteNonQuery(); return c; }
-    public void Initialize(){ using var c=Open(); using var cmd=c.CreateCommand(); cmd.CommandText="PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;"; cmd.ExecuteNonQuery(); }
+    public void Initialize(){ using(var c=Open()){ using var cmd=c.CreateCommand(); cmd.CommandText="PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;"; cmd.ExecuteNonQuery(); } EnsureManagementSchema(); }
     private static DateTime ParseDate(string s)=>DateTime.ParseExact(s,"yyyy-MM-dd",CultureInfo.InvariantCulture);
     private static DateTime? ParseNullableDate(object v)=>v is DBNull?null:ParseDate((string)v);
 
