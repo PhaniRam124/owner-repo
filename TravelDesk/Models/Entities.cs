@@ -15,6 +15,7 @@ public sealed class TripListItem
     public string? OnwardFlight { get; set; } public string? OnwardPnr { get; set; } public string? OnwardSeats { get; set; }
     public string? ReturnFlight { get; set; } public string? ReturnPnr { get; set; } public string? ReturnSeats { get; set; }
     public string? Hotel { get; set; } public string? Transport { get; set; } public string? TransportDetails { get; set; }
+    public string? BookingSource { get; set; } public string? BookingRef { get; set; } public string? HotelSummary { get; set; } public string? CabSummary { get; set; }
     public decimal? TotalCost { get; set; } public string? Status { get; set; } public string? NextAction { get; set; } public string? Remarks { get; set; }
     public string SelectorLabel => $"{DepartureDate:dd-MMM} · {RouteLabel.Replace(" → "," ⇄ ")} · {Pax} Pax · {TripCode}";
 }
@@ -24,11 +25,49 @@ public sealed class TripEditModel
     public long TripTypeId { get; set; } public long RouteId { get; set; } public long? OnwardFlightId { get; set; } public long? ReturnFlightId { get; set; }
     public string? OnwardPnr { get; set; } public string? OnwardSeats { get; set; } public string? ReturnPnr { get; set; } public string? ReturnSeats { get; set; }
     public long? HotelOptionId { get; set; } public long? TransportOptionId { get; set; } public string? TransportDetails { get; set; } public decimal? TotalCost { get; set; }
-    public long? StatusOptionId { get; set; } public string? Remarks { get; set; } public List<long> TravellerIds { get; set; }=new();
+    public long? StatusOptionId { get; set; } public string? BookingSource { get; set; } public string? BookingRef { get; set; } public string? Remarks { get; set; } public List<long> TravellerIds { get; set; }=new();
 }
 public sealed class TravellerChoice : INotifyPropertyChanged
 {
     public long Id { get; set; } public string Display { get; set; }=""; private bool _isSelected;
     public bool IsSelected { get=>_isSelected; set { if(_isSelected==value)return; _isSelected=value; PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(nameof(IsSelected))); } }
     public event PropertyChangedEventHandler? PropertyChanged;
+}
+
+public sealed class HotelBookingItem
+{
+    public long Id { get; set; }
+    public long TripId { get; set; }
+    public string TripCode { get; set; } = "";
+    public string HotelName { get; set; } = "";
+    public string City { get; set; } = "";
+    public DateTime CheckIn { get; set; } = DateTime.Today;
+    public DateTime CheckOut { get; set; } = DateTime.Today;
+    public string BookingSource { get; set; } = "MakeMyTrip";
+    public string? BookingRef { get; set; }
+    public string? ConfirmationNo { get; set; }
+    public string? RoomType { get; set; }
+    public decimal? Amount { get; set; }
+    public string Status { get; set; } = "Booked";
+    public string? Remarks { get; set; }
+    public string DateRange => $"{CheckIn:dd-MMM} – {CheckOut:dd-MMM}";
+}
+
+public sealed class CabBookingItem
+{
+    public long Id { get; set; }
+    public long TripId { get; set; }
+    public string TripCode { get; set; } = "";
+    public DateTime TravelDate { get; set; } = DateTime.Today;
+    public string? PickupTime { get; set; }
+    public string PickupLocation { get; set; } = "";
+    public string DropLocation { get; set; } = "";
+    public string? Provider { get; set; }
+    public string BookingSource { get; set; } = "MakeMyTrip";
+    public string? BookingRef { get; set; }
+    public string? VehicleType { get; set; }
+    public decimal? Amount { get; set; }
+    public string Status { get; set; } = "Booked";
+    public string? Remarks { get; set; }
+    public string Route => $"{PickupLocation} → {DropLocation}";
 }
