@@ -64,4 +64,4 @@ jobs:
           name: ManagementTravelTracker_Portable_v1.2.0
           path: TravelDesk/publish/win-x64/**
           if-no-files-found: error
-# rebuilt after source repair
+# v1.2.0 CTM-inspired rebuild
