@@ -42,8 +42,10 @@ public partial class TripsView : UserControl, IRefreshable
         OnwardMetaText.Text=$"PNR: {x.OnwardPnr ?? "—"}   •   Seats: {x.OnwardSeats ?? "—"}";
         ReturnFlightText.Text=x.ReturnFlight ?? "Not selected";
         ReturnMetaText.Text=$"PNR: {x.ReturnPnr ?? "—"}   •   Seats: {x.ReturnSeats ?? "—"}";
-        TripMetaText.Text=$"{x.RouteLabel}   •   {x.Pax} Pax   •   {x.Transport ?? "Transport not set"}   •   {x.Status ?? "No status"}";
-        RemarksText.Text=string.IsNullOrWhiteSpace(x.Remarks) ? (x.NextAction ?? "") : $"Next: {x.NextAction ?? "—"}   |   {x.Remarks}";
+        var booking=string.IsNullOrWhiteSpace(x.BookingRef)?"":$"   •   {x.BookingSource??"Booking"}: {x.BookingRef}";
+        TripMetaText.Text=$"{x.RouteLabel}   •   {x.Pax} Pax   •   {x.Status ?? "No status"}{booking}";
+        var logistics=string.Join("   |   ",new[]{x.HotelSummary,x.CabSummary,x.Transport}.Where(v=>!string.IsNullOrWhiteSpace(v)));
+        RemarksText.Text=string.Join("   |   ",new[]{logistics,string.IsNullOrWhiteSpace(x.Remarks)?x.NextAction:$"Next: {x.NextAction??"—"} · {x.Remarks}"}.Where(v=>!string.IsNullOrWhiteSpace(v)));
     }
 
     private void ClearDetails()
