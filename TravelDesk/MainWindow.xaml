@@ -44,7 +44,7 @@
 
     <Border DockPanel.Dock="Bottom" Margin="14" Padding="12" CornerRadius="10" Background="#F6F9FD" BorderBrush="{StaticResource Border}" BorderThickness="1">
      <StackPanel>
-      <TextBlock Text="LOCAL & SECURE" Foreground="{StaticResource Good}" FontSize="10" FontWeight="Bold"/>
+      <TextBlock Text="LOCAL &amp; SECURE" Foreground="{StaticResource Good}" FontSize="10" FontWeight="Bold"/>
       <TextBlock Text="SQLite • Offline • Single user" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,3,0,0"/>
      </StackPanel>
     </Border>
